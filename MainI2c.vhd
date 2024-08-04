@@ -32,10 +32,10 @@ begin
     process is
     begin
      I2cWrite <= B"11111110";
-     ReadWrite<= '0';
+     ReadWrite<= '1';
      I2cAddress <= B"1110001";
      StartI2c <= '1';
-     wait for 10 us;
+     wait for 50 us;
      StartI2c <= '0';
      wait for 50 us;
     end process;
