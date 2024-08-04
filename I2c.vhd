@@ -8,10 +8,10 @@ entity I2c is
             DataBit     : integer           := 8);
 
     port(I2cAddress  : in std_logic_vector(6 downto 0)  := B"0000000";
-         Sda         : inout std_logic;
+         Sda         : inout std_logic := '1';
          Scl         : inout std_logic := '1';
-         Read_Write  : inout std_logic := '0';
-         StartI2c    : in std_logic;
+         ReadWrite   : in std_logic := '0';
+         StartI2c    : in    std_logic;
          I2cRead     : inout std_logic_vector(7 downto 0);
          I2cWrite    : in std_logic_vector(7 downto 0)  := B"00000000");
 end I2c;
@@ -33,14 +33,12 @@ begin
    Scl <= not Scl after SclPeriod/2;
     process(Scl) is
     begin
-      if Scl = '1' then
-        if I2cState = START_TRANSMIT then
+        if I2cState = START_TRANSMIT and Scl = '1' then
           if StartI2c = '1' then
               Sda <= '0';
               I2cState <= ADDRESS_FRAME;
           end if;
          end if;
-      end if;
         if (falling_edge(Scl)) then
             case I2cState is
                 when ADDRESS_FRAME =>
@@ -51,11 +49,11 @@ begin
                      DataCounter <= DataBit;
                     end if;
                 when READ_WRITE_BIT =>
-                   Sda      <= Read_Write;
+                   Sda      <= ReadWrite;
                    I2cState <= ACK_NACK_BIT_ADDRESS;
                 when ACK_NACK_BIT_ADDRESS =>
                    if Sda = '0' then
-                    if Read_Write = '0' then
+                    if ReadWrite = '0' then
                        I2cState <= DATA_FRAME_WRITE;
                     else
                        I2cState <= DATA_FRAME_READ;
@@ -82,6 +80,7 @@ begin
                 when ACK_NACK_BIT_END =>
                    if Sda = '0' then
                     I2cState <= STOP_TRANSMIT;
+                    Sda      <= '1';
                    else
                     I2cState <= START_TRANSMIT;
                     Sda      <= '1';
@@ -89,7 +88,6 @@ begin
                    end if;
                 when STOP_TRANSMIT =>
                    I2cState <= START_TRANSMIT;
-                   Sda      <= '1';
                    DataCounter <= AddressBit-1;
                 when others =>
                 end case;
