@@ -4,16 +4,16 @@ use ieee.std_logic_signed.all;
 
 entity I2c is
     generic(Frequency   : integer           := 1000000;
-            I2c_Address : std_logic_vector  := B"0000000";
             AddressBit  : integer           := 7;
-            DataBit     : integer           := 8;
-            I2cWrite    : std_logic_vector  := B"00000000");
+            DataBit     : integer           := 8);
 
-    port(Sda        : inout std_logic;
-         Scl        : inout std_logic := '1';
-         Read_Write : inout std_logic := '0';
-         StartI2c   : in std_logic;
-         I2cRead    : inout std_logic_vector(7 downto 0));
+    port(I2cAddress  : in std_logic_vector(6 downto 0)  := B"0000000";
+         Sda         : inout std_logic;
+         Scl         : inout std_logic := '1';
+         Read_Write  : inout std_logic := '0';
+         StartI2c    : in std_logic;
+         I2cRead     : inout std_logic_vector(7 downto 0);
+         I2cWrite    : in std_logic_vector(7 downto 0)  := B"00000000");
 end I2c;
 
 architecture rtl of I2c is
@@ -44,7 +44,7 @@ begin
         if (falling_edge(Scl)) then
             case I2cState is
                 when ADDRESS_FRAME =>
-                    Sda         <= I2c_Address(DataCounter);
+                    Sda         <= I2cAddress(DataCounter);
                     DataCounter <= DataCounter - 1;
                     if DataCounter = 0 then
                      I2cState <= READ_WRITE_BIT;
@@ -63,6 +63,7 @@ begin
                    else
                     I2cState <= START_TRANSMIT;
                     Sda      <= '1';
+                    DataCounter <= AddressBit-1;
                    end if;
                 when DATA_FRAME_WRITE =>
                    if DataCounter = 0 then
@@ -84,6 +85,7 @@ begin
                    else
                     I2cState <= START_TRANSMIT;
                     Sda      <= '1';
+                    DataCounter <= AddressBit-1;
                    end if;
                 when STOP_TRANSMIT =>
                    I2cState <= START_TRANSMIT;
