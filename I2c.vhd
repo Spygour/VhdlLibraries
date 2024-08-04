@@ -12,7 +12,7 @@ entity I2c is
     port(Sda        : inout std_logic;
          Scl        : inout std_logic := '1';
          Read_Write : inout std_logic := '0';
-         StartI2c   : inout std_logic := '0';
+         StartI2c   : in std_logic;
          I2cRead    : inout std_logic_vector(7 downto 0));
 end I2c;
 
@@ -35,9 +35,8 @@ begin
     begin
       if Scl = '1' then
         if I2cState = START_TRANSMIT then
-          if StartI2c = '0' then
+          if StartI2c = '1' then
               Sda <= '0';
-              StartI2c <= '1';
               I2cState <= ADDRESS_FRAME;
           end if;
          end if;
@@ -63,7 +62,6 @@ begin
                     end if;
                    else
                     I2cState <= START_TRANSMIT;
-                    StartI2c <= '0';
                     Sda      <= '1';
                    end if;
                 when DATA_FRAME_WRITE =>
@@ -85,12 +83,10 @@ begin
                     I2cState <= STOP_TRANSMIT;
                    else
                     I2cState <= START_TRANSMIT;
-                    StartI2c <= '0';
                     Sda      <= '1';
                    end if;
                 when STOP_TRANSMIT =>
                    I2cState <= START_TRANSMIT;
-                   StartI2c <= '0';
                    Sda      <= '1';
                    DataCounter <= AddressBit-1;
                 when others =>
