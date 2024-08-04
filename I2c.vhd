@@ -87,8 +87,10 @@ begin
                     DataCounter <= AddressBit-1;
                    end if;
                 when STOP_TRANSMIT =>
-                   I2cState <= START_TRANSMIT;
-                   DataCounter <= AddressBit-1;
+                   if StartI2c = '0' then
+                     I2cState <= START_TRANSMIT;
+                     DataCounter <= AddressBit-1;
+                   end if;
                 when others =>
                 end case;
         end if;
