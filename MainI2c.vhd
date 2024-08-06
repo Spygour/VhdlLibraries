@@ -15,6 +15,7 @@ architecture sim of MainI2c is
     signal Scl            : std_logic;
     signal ReadWrite      : std_logic := '0';
     signal StartI2c       : std_logic := '0';
+    signal EndI2c         : std_logic := '0';
     signal I2cWrite       : std_logic_vector(7 downto 0) := B"01011000";
     signal I2cRead        : std_logic_vector(7 downto 0) := x"00";
 begin
@@ -27,15 +28,16 @@ begin
              Scl         => Scl,
              ReadWrite   => ReadWrite,
              StartI2c    => StartI2c,
+             EndI2c      => EndI2c,
              I2cRead     => I2cRead,
              I2cWrite    => I2cWrite);
     process is
     begin
      I2cWrite <= B"11111110";
-     ReadWrite<= '1';
-     I2cAddress <= B"1110001";
+     ReadWrite<= '0';
+     I2cAddress <= B"1110000";
      StartI2c <= '1';
-     wait for 50 us;
+     wait until EndI2c = '1';
      StartI2c <= '0';
      wait for 50 us;
     end process;
