@@ -5,23 +5,23 @@ use ieee.numeric_std.all;
 use ieee.std_logic_signed.all;
 
 entity UartHandler is
+    generic(Baudrate : integer := 115200);
+    port(Tx :          out std_logic := '1';
+    Rx :               inout std_logic := '1';
+    HandlerTxPacket:   in  UartArray := (x"FF",x"43",x"55", others => (others => '0'));
+    HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
+    UartSize:          in integer := 3;
+    ReadWrite:         in std_logic :='1';
+    StartUartHandler:  in std_logic := '0';
+    EndUartHandler:   out std_logic := '0';
+    ParityBit :        in std_logic := '0');
 
 end UartHandler;
 
-architecture sim1 of UartHandler is 
-    constant Baudrate : integer := 115200;
-    signal Tx : std_logic := '1';
-    signal Rx : std_logic := '1';
-    signal HandlerTxPacket : UartArray := (x"FF",x"43",x"55", others => (others => '0'));
-    signal HandlerRxPacket : UartArray := (others=> (others=>'0'));
-    Signal UartSize : integer := 3;
-    signal ReadWrite : std_logic := '1';
-    signal StartUart : std_logic := '0';
-    signal EndUart : std_logic := '0';
-    signal ParityBit : std_logic := '0';
-    signal StartUartHandler : std_logic := '1';
-    signal EndUartHandler : std_logic := '1';
-    signal TxPacket : std_logic_vector(7 downto 0) := HandlerTxPacket(2)(7 downto 0);
+architecture sim1 of UartHandler is
+    signal StartUart: std_logic := '0';
+    signal EndUart: std_logic := '0'; 
+    signal TxPacket : std_logic_vector(7 downto 0) := HandlerTxPacket(UartSize - 1)(7 downto 0);
     signal RxPacket : std_logic_vector(7 downto 0);
 begin
     Uart: entity work.Uart(rtl)
@@ -37,13 +37,25 @@ begin
              ParityBit => ParityBit);
     process is
     begin
-        for i in 0 to (UartSize - 1) loop
-            TxPacket <= HandlerTxPacket(i)(7 downto 0);
-            StartUart <= '1';
-            Wait until EndUart = '1';
-            StartUart <= '0';
-            wait for 10 us;
-        end loop;
+        if StartUartHandler = '1' and ReadWrite = '1' then
+            for i in 0 to (UartSize - 1) loop
+                TxPacket <= HandlerTxPacket(i)(7 downto 0);
+                StartUart <= '1';
+                Wait until EndUart = '1';
+                StartUart <= '0';
+                wait for 10 us;
+            end loop;
+            EndUartHandler <= '1';
+        elsif StartUartHandler = '1' and ReadWrite = '0' then
+            for i in 0 to (UartSize - 1) loop
+                StartUart <= '1';
+                Wait until EndUart = '1';
+                StartUart <= '0';
+                HandlerRxPacket(i)(7 downto 0) <= RxPacket;
+                wait for 10 us;
+            end loop;
+            EndUartHandler <= '1';
+        end if;
         wait for 10 ns;
     end process;
 end architecture;
