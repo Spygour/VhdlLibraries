@@ -31,7 +31,9 @@ architecture rtl of I2c is
     signal I2cState : I2C_STATE := START_TRANSMIT;
     signal DataCounter : integer := AddressBit-1;
 begin
-   Scl <= not Scl after SclPeriod/2;
+    Clock : entity work.ClockFreq(clk)
+    generic map(Freq => Frequency)
+    port map(componentClck => Scl);
     process(Scl) is
     begin
         if I2cState = START_TRANSMIT and Scl = '1' then

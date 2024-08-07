@@ -36,7 +36,10 @@ architecture rtl of Uart is
     Signal UartState : UART_STATE := IDLE_STATE;
     signal BitCounter : integer := 7;
 begin
-    Clk <= not Clk after UartPeriod/2;
+    Clock : entity work.ClockFreq(clk)
+    generic map(Freq => Baudrate)
+    port map(componentClck => Clk);
+
     process(Clk) is
     begin
         if(rising_edge(Clk)) then
