@@ -7,7 +7,8 @@ entity I2c is
             AddressBit  : integer := 7;
             DataBit     : integer := 8);
 
-    port(I2cAddress  : in std_logic_vector(6 downto 0)  := B"0000000";
+    port(ActlClk : inout std_logic := '1';  
+         I2cAddress  : in std_logic_vector(6 downto 0)  := B"0000000";
          Sda         : inout std_logic := '1';
          Scl         : inout std_logic := '1';
          ReadWrite   : in std_logic := '0';
@@ -33,7 +34,8 @@ architecture rtl of I2c is
 begin
     Clock : entity work.ClockFreq(clk)
     generic map(Freq => Frequency)
-    port map(componentClck => Scl);
+    port map(ActlClk       => ActlClk,
+             componentClck => Scl);
     process(Scl) is
     begin
         if I2cState = START_TRANSMIT and Scl = '1' then

@@ -7,7 +7,8 @@ use ieee.std_logic_signed.all;
 entity Uart is 
     generic(Baudrate : integer := 115200);
 
-    port(Tx :       out std_logic := '1';
+    port(ActlClk : inout std_logic := '1';
+         Tx :       out std_logic := '1';
          Rx :       inout std_logic := '1';
          TxPacket:  in std_logic_vector(7 downto 0);
          RxPacket:  out std_logic_vector(7 downto 0);
@@ -38,7 +39,8 @@ architecture rtl of Uart is
 begin
     Clock : entity work.ClockFreq(clk)
     generic map(Freq => Baudrate)
-    port map(componentClck => Clk);
+    port map(ActlClk       => ActlClk,
+             componentClck => Clk);
 
     process(Clk) is
     begin

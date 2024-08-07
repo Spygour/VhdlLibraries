@@ -6,15 +6,16 @@ use ieee.std_logic_signed.all;
 
 entity UartHandler is
     generic(Baudrate : integer := 115200);
-    port(Tx :          out std_logic := '1';
-    Rx :               inout std_logic := '1';
-    HandlerTxPacket:   in  UartArray := (x"FF",x"43",x"55", others => (others => '0'));
-    HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
-    UartSize:          in integer := 3;
-    ReadWrite:         in std_logic :='1';
-    StartUartHandler:  in std_logic := '0';
-    EndUartHandler:   out std_logic := '0';
-    ParityBit :        in std_logic := '0');
+    port(ActlClk :          inout  std_logic := '1';
+         Tx :               out std_logic := '1';
+         Rx :               inout std_logic := '1';
+         HandlerTxPacket:   in  UartArray := (x"FF",x"43",x"55", others => (others => '0'));
+         HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
+         UartSize:          in integer := 3;
+         ReadWrite:         in std_logic :='1';
+         StartUartHandler:  in std_logic := '0';
+         EndUartHandler:    out std_logic := '0';
+         ParityBit :        in std_logic := '0');
 
 end UartHandler;
 
@@ -26,7 +27,8 @@ architecture sim1 of UartHandler is
 begin
     Uart: entity work.Uart(rtl)
     generic map(Baudrate => Baudrate)
-    port map(Tx        => Tx,
+    port map(ActlClk   => ActlClk,
+             Tx        => Tx,
              Rx        => Rx,
              TxPacket  => TxPacket,
              RxPacket  => RxPacket,
@@ -55,6 +57,8 @@ begin
                 wait for 10 us;
             end loop;
             EndUartHandler <= '1';
+        else
+            EndUartHandler <= '0';
         end if;
         wait for 10 ns;
     end process;
