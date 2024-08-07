@@ -14,7 +14,7 @@ architecture clk of ClockFreq is
     constant ActualPeriod : time := 1000 ms / 50000000;
     constant MaxCount : integer := 50000000 / Freq;
 
-    signal ActlClk : std_logic := '0';
+    signal ActlClk : std_logic := '1';
 
 begin
     ActlClk <= not ActlClk after ActualPeriod/2;
