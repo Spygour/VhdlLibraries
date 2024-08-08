@@ -11,6 +11,7 @@ end MainUart;
 
 architecture sim of MainUart is
     constant Baudrate              : integer := 115200;
+    signal ActlClk                 : std_logic := '1';
     signal Tx                      : std_logic := '1';
     signal Rx                      : std_logic := '1';
     signal HandlerTxPacket         : UartArray := (x"FA",x"0F",x"AA", others => (others => '0'));
@@ -24,7 +25,8 @@ architecture sim of MainUart is
 begin
     Uart: entity work.UartHandler(sim1)
     generic map(Baudrate      => Baudrate)
-    port map(Tx               => Tx,
+    port map(ActlClk          => ActlClk,
+             Tx               => Tx,
              Rx               => Rx,
              HandlerTxPacket  => HandlerTxPacket,
              HandlerRxPacket  => HandlerRxPacket,

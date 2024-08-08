@@ -10,6 +10,7 @@ architecture sim of MainI2c is
     constant Frequency    : integer := 1000000;
     constant AddressBit   : integer := 7;
     constant DataBit      : integer := 8;
+    signal ActlClk        : std_logic := '1';
     signal I2cAddress     : std_logic_vector(6 downto 0) := B"0010101";
     signal Sda            : std_logic := '1';
     signal Scl            : std_logic;
@@ -23,7 +24,8 @@ begin
     generic map(Frequency  => Frequency,
                AddressBit  => AddressBit,
                DataBit     => DataBit)
-    port map(I2cAddress  => I2cAddress,
+    port map(ActlClk     => ActlClk,
+             I2cAddress  => I2cAddress,
              Sda         => Sda,
              Scl         => Scl,
              ReadWrite   => ReadWrite,
