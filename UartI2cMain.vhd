@@ -14,7 +14,7 @@ architecture sim of UartI2cMain is
     constant AddressBit   : integer := 7;
     constant DataBit      : integer := 8;
     signal ActlClk : std_logic := '1';
-
+    constant ActualPeriod : time := 1000 ms / 50000000;
     signal I2cAddress     : std_logic_vector(6 downto 0) := B"0010101";
     signal Sda            : std_logic := '1';
     signal Scl            : std_logic;
@@ -31,7 +31,7 @@ architecture sim of UartI2cMain is
     signal HandlerTxPacket         : UartArray := (x"FA",x"0F",x"AA", others => (others => '0'));
     signal HandlerRxPacket         : UartArray := (others=> (others=>'0'));
     signal UartSize                : integer := 3;
-    signal UartReadWrite               : std_logic := '1';
+    signal UartReadWrite           : std_logic := '1';
     signal ParityBit               : std_logic := '0';
     signal StartUartHandler        : std_logic := '0';
     signal EndUartHandler          : std_logic := '0';
@@ -63,6 +63,11 @@ begin
              StartUartHandler => StartUartHandler,
              EndUartHandler   => EndUartHandler,
              ParityBit        => ParityBit);
+
+    process(ActlClk) is
+    begin
+    ActlClk <= not ActlClk after ActualPeriod/2;
+    end process;
              
     process is
     begin

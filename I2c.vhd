@@ -7,7 +7,7 @@ entity I2c is
             AddressBit  : integer := 7;
             DataBit     : integer := 8);
 
-    port(ActlClk : inout std_logic := '1';  
+    port(ActlClk     : in std_logic := '1';  
          I2cAddress  : in std_logic_vector(6 downto 0)  := B"0000000";
          Sda         : inout std_logic := '1';
          Scl         : inout std_logic := '1';

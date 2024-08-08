@@ -33,6 +33,12 @@ begin
              EndI2c      => EndI2c,
              I2cRead     => I2cRead,
              I2cWrite    => I2cWrite);
+
+    process(ActlClk) is
+    begin
+    ActlClk <= not ActlClk after ActualPeriod/2;
+    end process;
+
     process is
     begin
      I2cWrite <= B"11111110";

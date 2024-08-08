@@ -35,6 +35,12 @@ begin
              StartUartHandler => StartUartHandler,
              EndUartHandler   => EndUartHandler,
              ParityBit        => ParityBit);
+
+    process(ActlClk) is
+    begin
+    ActlClk <= not ActlClk after ActualPeriod/2;
+    end process;
+    
     process is
     begin
         StartUartHandler <= '1';

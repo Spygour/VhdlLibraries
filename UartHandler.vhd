@@ -6,7 +6,7 @@ use ieee.std_logic_signed.all;
 
 entity UartHandler is
     generic(Baudrate : integer := 115200);
-    port(ActlClk :          inout  std_logic := '1';
+    port(ActlClk :          in  std_logic := '1';
          Tx :               out std_logic := '1';
          Rx :               inout std_logic := '1';
          HandlerTxPacket:   in  UartArray := (x"FF",x"43",x"55", others => (others => '0'));

@@ -7,7 +7,7 @@ use ieee.std_logic_signed.all;
 entity Uart is 
     generic(Baudrate : integer := 115200);
 
-    port(ActlClk : inout std_logic := '1';
+    port(ActlClk :  in std_logic := '1';
          Tx :       out std_logic := '1';
          Rx :       inout std_logic := '1';
          TxPacket:  in std_logic_vector(7 downto 0);
