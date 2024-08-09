@@ -10,6 +10,7 @@ entity MainUart is
 end MainUart;
 
 architecture sim of MainUart is
+    constant ActualPeriod : time := 1000 ms / 50000000;
     constant Baudrate              : integer := 115200;
     signal ActlClk                 : std_logic := '1';
     signal Tx                      : std_logic := '1';

@@ -17,7 +17,7 @@ architecture clk of ClockFreq is
 
 begin
 
-    process(ActlClk)
+    process(ActlClk) is
         variable Counter : integer := 0;
     begin
         if(rising_edge(ActlClk)) then

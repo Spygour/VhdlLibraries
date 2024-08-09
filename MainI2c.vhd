@@ -7,6 +7,7 @@ entity MainI2c is
 end MainI2c;
 
 architecture sim of MainI2c is
+    constant ActualPeriod : time := 1000 ms / 50000000;
     constant Frequency    : integer := 1000000;
     constant AddressBit   : integer := 7;
     constant DataBit      : integer := 8;
