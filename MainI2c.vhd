@@ -7,7 +7,6 @@ entity MainI2c is
 end MainI2c;
 
 architecture sim of MainI2c is
-    constant ActualPeriod : time := 1000 ms / 50000000;
     constant Frequency    : integer := 1000000;
     constant AddressBit   : integer := 7;
     constant DataBit      : integer := 8;
@@ -34,11 +33,6 @@ begin
              EndI2c      => EndI2c,
              I2cRead     => I2cRead,
              I2cWrite    => I2cWrite);
-
-    process(ActlClk) is
-    begin
-    ActlClk <= not ActlClk after ActualPeriod/2;
-    end process;
 
     process is
     begin
