@@ -92,13 +92,12 @@ begin
                             else
                                 UartState <= PARITY_STATE_WRITE;
                             end if;
-                        else
-                            Tx_reg <= Tx_Packet(BitCounter);
-                            if Tx_Packet(BitCounter) = '1' then
-                                ParityCounter <= ParityCounter + 1;
-                            end if;
-                            BitCounter <= BitCounter + 1;
                         end if;
+                        Tx_reg <= Tx_Packet(7 - BitCounter);
+                        if Tx_Packet(7- BitCounter) = '1' then
+                            ParityCounter <= ParityCounter + 1;
+                        end if;
+                        BitCounter <= BitCounter + 1;
 
                     when PARITY_STATE_WRITE =>
                        if (ParityCounter mod 2) = 0 then
@@ -127,13 +126,12 @@ begin
                         else
                             UartState <= PARITY_STATE_READ;
                         end if;
-                       else
-                        Rx_Packet(BitCounter) <= Rx_reg;
-                        if Rx_reg = '1' then
-                         ParityCounter <= ParityCounter + 1;
-                        end if;
-                        BitCounter <= BitCounter + 1;
+							  end if;
+                       Rx_Packet(BitCounter) <= Rx_reg;
+                       if Rx_reg = '1' then
+                        ParityCounter <= ParityCounter + 1;
                        end if;
+                       BitCounter <= BitCounter + 1;
 
                     when PARITY_STATE_READ =>
                        UartState <= STOP_STATE_READ;

@@ -16,7 +16,7 @@ end MainUart;
 architecture sim of MainUart is
     constant SystemClk : integer := 50000000;
     constant Baudrate : integer := 115200;
-    signal TxPacket : std_logic_vector(0 to 7) := B"10110011";
+    signal TxPacket : std_logic_vector(0 to 7) := B"01000001";
     signal RxPacket : std_logic_vector(0 to 7);
     signal ReadWrite : std_logic := '1';
     signal ParityBit : std_logic := '0';
