@@ -23,7 +23,7 @@ end I2c;
 architecture rtl of I2c is
     constant DivideVal : integer := SystemFreq/ (4*Frequency);
 	 signal Scl_ena : std_logic;
-	 signal Scl_reg : std_logic := '0';
+	 signal Scl_reg : std_logic := '1';
     Signal Scl_regPrev : std_logic := '0';
     signal Sda_reg : std_logic := '1';
 	 signal Sda_output : std_logic := '0';
@@ -51,8 +51,8 @@ begin
 	begin
     if Reset_n = '0' then
       Counter := 0;
-      Scl_reg <= '0';
-      Scl_regPrev <= '0';
+      Scl_reg <= '1';
+      Scl_regPrev <= '1';
       SdaClk_reg <= '0';
       SdaClk_regPrev <= '0';
     elsif (ActlClk'event and ActlClk = '1') then
@@ -187,6 +187,6 @@ with I2cState SELECT
                 '0' when ACK_NACK_BIT_END,
 					      '1' when others;
 
-  Scl <= Scl_reg when Scl_ena = '1'  else 'Z';
-  Sda <= Sda_reg when Sda_output = '1' else 'Z';
+  Scl <= '0' when (Scl_ena = '1' and Scl_reg = '0')  else 'Z';
+  Sda <= '0' when (Sda_output = '1' and Sda_reg = '0') else 'Z';
 END architecture;
