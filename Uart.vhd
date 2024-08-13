@@ -37,11 +37,12 @@ architecture rtl of Uart is
     signal Clk_prev : std_logic := '1';
     signal Clk : std_logic := '1';
     signal Tx_reg : std_logic := '1';
-	 signal Rx_reg : std_logic := '1';
+	signal Rx_reg : std_logic := '1';
     signal ParityCounter : integer := 0;
     Signal UartState : UART_STATE := IDLE_STATE;
     signal BitCounter : integer := 0;
     signal Rw : std_logic;
+	 signal StartUart_prev : std_logic;
 begin
     process(ActlClk, Reset_n) is
         variable Counter : integer range 0 to UartPeriod;
@@ -68,17 +69,22 @@ begin
             BitCounter <= 0;
             Tx_Packet <= TxPacket;
             ParityCounter <= 0;
+				StartUart_prev <= StartUart;
         elsif(ActlClk'event and ActlClk = '1') then
             if (Clk = '1' and Clk_prev = '0') then
                 case UartState is
                     when IDLE_STATE => 
-                       if StartUart = '0' then
+                       if (StartUart = '0' and StartUart_prev = '1') then
+						StartUart_prev <= StartUart;
                         EndUart <= '0';
                         if Rw = '1' then
                             UartState <= START_STATE_WRITE;
                         else
                             UartState <= START_STATE_READ;
                         end if;
+                       else
+						StartUart_prev <= StartUart;
+                        EndUart <= '0';
                         end if;
 
                     when START_STATE_WRITE => 

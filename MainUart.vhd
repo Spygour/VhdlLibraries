@@ -18,7 +18,7 @@ architecture sim of MainUart is
     constant Baudrate : integer := 115200;
     signal TxPacket : std_logic_vector(0 to 7) := B"01000001";
     signal RxPacket : std_logic_vector(0 to 7);
-    signal ReadWrite : std_logic := '1';
+    signal ReadWrite : std_logic := '0';
     signal ParityBit : std_logic := '0';
 
 begin
