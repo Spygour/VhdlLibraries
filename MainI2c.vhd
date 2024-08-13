@@ -5,9 +5,9 @@ use ieee.std_logic_signed.all;
 entity MainI2c is 
     port (  ActlClk  : in  std_logic;
 	        Sda      : inout std_logic;
-			  Scl      : inout std_logic;
+		   Scl      : inout std_logic;
            StartI2c : in std_logic;
-			  EndI2c   : out std_logic := '0';
+		   EndI2c   : out std_logic := '0';
            ResetI2c : in std_logic);
 end MainI2c;
 
@@ -17,7 +17,7 @@ architecture sim of MainI2c is
 	 constant BytesNumber  : integer := 4;
     constant DataBit      : integer := 8;
     signal I2cAddress     : std_logic_vector(0 to 6) := B"0010101";
-    signal ReadWrite      : std_logic := '1';
+    signal ReadWrite      : std_logic := '0';
     signal I2cWrite       : std_logic_vector(0 to 7) := B"01011000";
     signal I2cRead        : std_logic_vector(0 to 7) := x"00";
 begin
