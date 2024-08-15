@@ -39,7 +39,8 @@ architecture rtl of I2c is
         ACK_NACK_BIT_ADDRESS,
         DATA_FRAME_READ,
         DATA_FRAME_WRITE,
-        ACK_NACK_BIT_END,
+        ACK_NACK_BIT_END_WRITE,
+        ACK_NACK_BIT_END_READ,
 		  STOP_TRANSMIT);
     signal I2cState : I2C_STATE := IDLE_STATE;
     signal DataCounter : integer range 0 to 10 := 0;
@@ -126,28 +127,23 @@ begin
 
           when DATA_FRAME_READ =>
             if DataCounter = 8 then
-                I2cState <= ACK_NACK_BIT_END;
+                I2cState <= ACK_NACK_BIT_END_READ;
                 BytesCounter := BytesCounter + 1;
             else
                 I2cRead(DataCounter) <= Sda;  -- Read data bits
                 DataCounter <= DataCounter + 1;
-					      I2cState <= DATA_FRAME_READ;
+					 I2cState <= DATA_FRAME_READ;
             end if;
 
-          when ACK_NACK_BIT_END =>
+          when ACK_NACK_BIT_END_WRITE =>
             if Sda = '0' then
-                if (BytesCounter = BytesNumber or ReadWrite = '0')  then
                   I2cState <= STOP_TRANSMIT;
-                else 
-                  DataCounter <= 0;
-                  I2cState <= DATA_FRAME_READ;
-                end if;
             else
                 I2cState <= START_TRANSMIT;
             end if;
             
-          when STOP_TRANSMIT =>
-			   Sda_reg <= '1';
+         when STOP_TRANSMIT =>
+			      Sda_reg <= '1';
             I2cState <= IDLE_STATE;
             EndI2c <= '1';
           when others => null;
@@ -165,11 +161,21 @@ begin
 
           when DATA_FRAME_WRITE =>
              if DataCounter = DataBit then
-				  	   I2cState <= ACK_NACK_BIT_END;
+				  	   I2cState <= ACK_NACK_BIT_END_WRITE;
              else
                  Sda_reg <= I2cWr(DataCounter);  -- Write data bits
                  DataCounter <= DataCounter + 1;
              end if;
+
+          when ACK_NACK_BIT_END_READ =>
+              if (BytesCounter = BytesNumber)  then
+				        Sda_reg <= '1';
+                I2cState <= STOP_TRANSMIT;
+              else
+				        Sda_reg <= '0';
+                DataCounter <= 0;
+                I2cState <= DATA_FRAME_READ;
+              end if;
 
           when others =>  null;
         end case;
@@ -184,8 +190,8 @@ with I2cState SELECT
 with I2cState SELECT
   Sda_output <= '0' when DATA_FRAME_READ,
                 '0' when ACK_NACK_BIT_ADDRESS,
-                '0' when ACK_NACK_BIT_END,
-					      '1' when others;
+                '0' when ACK_NACK_BIT_END_WRITE,
+					 '1' when others;
 
   Scl <= '0' when (Scl_ena = '1' and Scl_reg = '0')  else 'Z';
   Sda <= '0' when (Sda_output = '1' and Sda_reg = '0') else 'Z';
