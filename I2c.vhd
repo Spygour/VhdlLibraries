@@ -186,7 +186,6 @@ end if;
   end process;
 with I2cState SELECT 
   Scl_ena <= '0' when IDLE_STATE,
-             '0' when STOP_TRANSMIT,
              '1'  when others;
 				 
 with I2cState SELECT
@@ -195,6 +194,4 @@ with I2cState SELECT
                 '0' when ACK_NACK_BIT_END_WRITE,
 					 '1' when others;
 
-  Scl <= '0' when (Scl_ena = '1' and Scl_reg = '0')  else 'Z';
-  Sda <= '0' when (Sda_output = '1' and Sda_reg = '0') else 'Z';
 END architecture;
