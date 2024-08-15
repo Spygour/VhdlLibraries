@@ -136,11 +136,7 @@ begin
             end if;
 
           when ACK_NACK_BIT_END_READ =>
-          if (BytesCounter = BytesNumber)  then
-            I2cState <= STOP_TRANSMIT;
-          else
             I2cState <= DATA_FRAME_READ;
-          end if;
 
           when ACK_NACK_BIT_END_WRITE =>
             if Sda = '0' then
@@ -177,6 +173,7 @@ begin
           when ACK_NACK_BIT_END_READ =>
               if (BytesCounter = BytesNumber)  then
 				        Sda_reg <= '1';
+						I2cState <= STOP_TRANSMIT;
               else
 				        Sda_reg <= '0';
                 DataCounter <= 0;
