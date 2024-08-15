@@ -194,4 +194,6 @@ with I2cState SELECT
                 '0' when ACK_NACK_BIT_END_WRITE,
 					 '1' when others;
 
+  Scl <= '0' when (Scl_ena = '1' and Scl_reg = '0')  else 'Z';
+  Sda <= '0' when (Sda_output = '1' and Sda_reg = '0') else 'Z';
 END architecture;
