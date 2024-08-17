@@ -1,3 +1,4 @@
+use work.I2cTypes.all;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_signed.all;
@@ -6,7 +7,7 @@ entity I2c is
     generic(SystemFreq  : integer := 50000000;
             Frequency   : integer := 1000000;
             DataBit     : integer := 8;
-				BytesNumber : integer := 1);
+				    BytesNumber : integer := 1);
 
     port(ActlClk     : in std_logic := '1'; 
          Reset_n     : in std_logic := '0'; 
@@ -16,8 +17,8 @@ entity I2c is
          ReadWrite   : in std_logic;
          StartI2c    : in std_logic;
          EndI2c      : out std_logic;
-         I2cRead     : inout std_logic_vector(0 to 7);
-         I2cWrite    : in std_logic_vector(0 to 7));
+         I2cWrite    : in  I2cArray := (B"01101100", others => (others => '0'));
+         I2cRead     : out I2cArray :=(others => (others => '0')));
 end I2c;
 
 architecture rtl of I2c is
@@ -41,6 +42,7 @@ architecture rtl of I2c is
         DATA_FRAME_WRITE,
         ACK_NACK_BIT_END_WRITE,
         ACK_NACK_BIT_END_READ,
+		  ACK_NACK_BIT_END_READ_CHANGE,
 		  STOP_TRANSMIT);
     signal I2cState : I2C_STATE := IDLE_STATE;
     signal DataCounter : integer range 0 to 10 := 0;
@@ -100,7 +102,7 @@ begin
 				      StartI2c_prev <= StartI2c;
               BytesCounter := 0;
               I2cAdrRw <= I2cAddress & ReadWrite;
-              I2cWr <= I2cWrite;
+              I2cWr <= I2cWrite(BytesCounter)(0 to 7);
               I2cState <= START_TRANSMIT;
             else
 				      StartI2c_prev <= StartI2c;
@@ -121,68 +123,84 @@ begin
                     DataCounter <= 0;
                     I2cState <= DATA_FRAME_READ;
                 end if;
-            else 
-                I2cState <= START_TRANSMIT;
             end if;
 
+			   when ACK_NACK_BIT_END_WRITE =>
+             if Sda = '0' then
+				      if (BytesCounter = BytesNumber) then
+						   Sda_reg <= '0';
+							I2cState <= STOP_TRANSMIT; -- It will be added more bytes functionality in case ACK is false this is wrong logic
+						else
+						   DataCounter <= 0;
+                     I2cWr <= I2cWrite(BytesCounter)(0 to 7);
+							I2cState <= DATA_FRAME_WRITE;
+						end if;
+             else
+                I2cState <= STOP_TRANSMIT;
+             end if;	
+				
           when DATA_FRAME_READ =>
-            if DataCounter = 8 then
-                I2cState <= ACK_NACK_BIT_END_READ;
-                BytesCounter := BytesCounter + 1;
-            else
-                I2cRead(DataCounter) <= Sda;  -- Read data bits
-                DataCounter <= DataCounter + 1;
-					 I2cState <= DATA_FRAME_READ;
-            end if;
-
-          when ACK_NACK_BIT_END_READ =>
-            I2cState <= DATA_FRAME_READ;
-
-          when ACK_NACK_BIT_END_WRITE =>
-            if Sda = '0' then
-                  I2cState <= STOP_TRANSMIT;
-            else
-                I2cState <= START_TRANSMIT;
-            end if;
+			   if DataCounter = 7 then
+					BytesCounter := BytesCounter + 1;
+               I2cState <= ACK_NACK_BIT_END_READ;
+				end if;
+            I2cRead(BytesCounter)(DataCounter) <= Sda;  -- Read data bits
+            DataCounter <= DataCounter + 1;
             
          when STOP_TRANSMIT =>
-			      Sda_reg <= '1';
+			   Sda_reg <= '1';
             I2cState <= IDLE_STATE;
             EndI2c <= '1';
-          when others => null;
+				
+         when others => null;
           end case;
 
      elsif (SdaClk_reg = '1' and SdaClk_regPrev = '0') then
-        case I2cState is
-          when ADDRESS_FRAME =>
-            if DataCounter = 8 then
-              I2cState <= ACK_NACK_BIT_ADDRESS;
+       case I2cState is
+         when ADDRESS_FRAME =>
+           if DataCounter = 8 then
+             I2cState <= ACK_NACK_BIT_ADDRESS;
+           else
+             Sda_reg <= I2cAdrRw(DataCounter);
+             DataCounter <= DataCounter + 1;
+           end if;
+				
+			when ACK_NACK_BIT_ADDRESS =>
+           if Sda = '1' then
+               I2cState <= STOP_TRANSMIT;
+           end if;
+
+         when DATA_FRAME_WRITE =>
+           if DataCounter = DataBit then
+					BytesCounter := BytesCounter + 1;
+			  	   I2cState <= ACK_NACK_BIT_END_WRITE;
+           else
+               Sda_reg <= I2cWr(DataCounter);  -- Write data bits
+               DataCounter <= DataCounter + 1;
+           end if;
+			  
+
+         when ACK_NACK_BIT_END_READ =>
+           if (BytesCounter = BytesNumber)  then
+			      Sda_reg <= '1';
+           else
+	   	      Sda_reg <= '0';
+               DataCounter <= 0;	
+           end if;
+			  I2cState <= ACK_NACK_BIT_END_READ_CHANGE;
+				  
+			when ACK_NACK_BIT_END_READ_CHANGE =>
+			  	if (Sda = '1')  then
+				      Sda_reg <= '0';
+						I2cState <= STOP_TRANSMIT;
             else
-              Sda_reg <= I2cAdrRw(DataCounter);
-              DataCounter <= DataCounter + 1;
+				      I2cState <= DATA_FRAME_READ;
             end if;
 
-          when DATA_FRAME_WRITE =>
-             if DataCounter = DataBit then
-				  	   I2cState <= ACK_NACK_BIT_END_WRITE;
-             else
-                 Sda_reg <= I2cWr(DataCounter);  -- Write data bits
-                 DataCounter <= DataCounter + 1;
-             end if;
-
-          when ACK_NACK_BIT_END_READ =>
-              if (BytesCounter = BytesNumber)  then
-				        Sda_reg <= '1';
-						I2cState <= STOP_TRANSMIT;
-              else
-				        Sda_reg <= '0';
-                DataCounter <= 0;
-              end if;
-
-          when others =>  null;
-        end case;
-      end if;
-end if;
+         when others =>  null;
+       end case;
+     end if;
+  end if;
   end process;
 with I2cState SELECT 
   Scl_ena <= '0' when IDLE_STATE,
