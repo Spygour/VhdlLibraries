@@ -22,6 +22,7 @@ end UartHandler;
 
 architecture sim1 of UartHandler is
     signal StartUart: std_logic := '0';
+    constant SystemClock : integer := 50000000;
     signal StartUartHandler_prev : std_logic := '1'
     signal EndUart: std_logic := '1'; 
     signal TxPacket : std_logic_vector(0 to 7) := HandlerTxPacket(0)(0 to 7);
@@ -36,14 +37,14 @@ architecture sim1 of UartHandler is
 
 begin
     Uart: entity work.Uart(rtl)
-    generic map(Baudrate => Baudrate)
+    generic map(SystemClock => SystemClock,
+                Baudrate    => Baudrate)
     port map(ActlClk   => ActlClk,
              Reset_n   => Reset_n,
              Tx        => Tx,
              Rx        => Rx,
              TxPacket  => TxPacket,
              RxPacket  => RxPacket,
-             UartSize  => UartSize,
              ReadWrite => ReadWrite,
              StartUart => StartUart,
              EndUart   => EndUart,
