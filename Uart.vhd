@@ -16,7 +16,7 @@ entity Uart is
          RxPacket:  out std_logic_vector(0 to 7);
          ReadWrite: in std_logic :='1';
          StartUart: in std_logic := '0';
-         EndUart :  out std_logic := '0';
+         EndUart :  out std_logic := '1';
          ParityBit : in std_logic := '0');
 end Uart;
 
@@ -42,7 +42,6 @@ architecture rtl of Uart is
     Signal UartState : UART_STATE := IDLE_STATE;
     signal BitCounter : integer := 0;
     signal Rw : std_logic;
-	 signal StartUart_prev : std_logic;
 begin
     process(ActlClk, Reset_n) is
         variable Counter : integer range 0 to UartPeriod;
@@ -64,27 +63,24 @@ begin
     begin
         if Reset_n = '0' then
             UartState <= IDLE_STATE;
-            EndUart <= '0';
+            EndUart <= '1';
             Rw <= ReadWrite;
             BitCounter <= 0;
             Tx_Packet <= TxPacket;
             ParityCounter <= 0;
-				StartUart_prev <= StartUart;
         elsif(ActlClk'event and ActlClk = '1') then
             if (Clk = '1' and Clk_prev = '0') then
                 case UartState is
                     when IDLE_STATE => 
-                       if (StartUart = '0' and StartUart_prev = '1') then
-						StartUart_prev <= StartUart;
-                        EndUart <= '0';
+                       if (StartUart = '1') then
+							   Tx_Packet <= TxPacket;
                         if Rw = '1' then
+									 EndUart <= '0';
                             UartState <= START_STATE_WRITE;
                         else
+									 EndUart <= '0';
                             UartState <= START_STATE_READ;
                         end if;
-                       else
-						StartUart_prev <= StartUart;
-                        EndUart <= '0';
                         end if;
 
                     when START_STATE_WRITE => 
@@ -116,8 +112,9 @@ begin
 
                     when STOP_STATE_WRITE =>
                        Tx_reg <= '1';
-							  BitCounter <= 0;
+					   BitCounter <= 0;
                        UartState <= IDLE_STATE;
+							  Rw <= ReadWrite;
                        EndUart <= '1';
 
                     when START_STATE_READ =>
@@ -144,9 +141,10 @@ begin
 
 
                     when STOP_STATE_READ =>
-                       EndUart <= '1';
-							  BitCounter <= 0;
+					   BitCounter <= 0;
                        UartState <= IDLE_STATE;
+							  Rw <= ReadWrite;
+					   EndUart <= '1';
 
                 end case;
             end if;
