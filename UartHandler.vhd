@@ -5,11 +5,12 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_signed.all;
 
 entity UartHandler is
-    generic(Baudrate : integer := 115200);
+    generic(SystemClk : integer := 50000000;
+				Baudrate : integer := 115200);
     port(ActlClk :          in  std_logic := '1';
          Reset_n :          in std_logic := '0';
          Tx :               out std_logic := '1';
-         Rx :               inout std_logic := '1';
+         Rx :               in std_logic;
          HandlerTxPacket:   in  UartArray := (others => (others => '0'));
          HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
          UartSize:          in integer := 3;
@@ -20,13 +21,14 @@ entity UartHandler is
 
 end UartHandler;
 
-architecture sim1 of UartHandler is
+architecture rtl2 of UartHandler is
+    constant UartLength : integer := UartSize;
     signal StartUart: std_logic := '0';
-    constant SystemClock : integer := 50000000;
-    signal StartUartHandler_prev : std_logic := '1'
+    signal StartUartHandler_prev : std_logic := '1';
     signal EndUart: std_logic := '1'; 
     signal TxPacket : std_logic_vector(0 to 7) := HandlerTxPacket(0)(0 to 7);
-    signal RxPacket : std_logic_vector(0 to 7);
+    signal RxPacket : std_logic_vector(0 to 7) := x"00";
+	 signal byteCounter : integer  := 0;
     type UART_HANDLER_STATE is
         (IDLE_STATE,
          PREPARE_UART,
@@ -37,7 +39,7 @@ architecture sim1 of UartHandler is
 
 begin
     Uart: entity work.Uart(rtl)
-    generic map(SystemClock => SystemClock,
+    generic map(SystemClk   => SystemClk,
                 Baudrate    => Baudrate)
     port map(ActlClk   => ActlClk,
              Reset_n   => Reset_n,
@@ -49,25 +51,29 @@ begin
              StartUart => StartUart,
              EndUart   => EndUart,
              ParityBit => ParityBit);
-    process(ActlClk) is
-        variable byteCounter : integer range 0  to UartSize;
+    process(ActlClk,Reset_n) is
     begin
         if Reset_n = '0' then
-            byteCounter := 0;
-            TxPacket := HandlerTxPacket(0)(0 to 7);
+            byteCounter <= 0;
+            TxPacket <= HandlerTxPacket(0)(0 to 7);
         elsif(ActlClk'event and ActlClk = '1') then
             case UartHandlerState is
                 when IDLE_STATE =>
                     if (StartUartHandler = '0' and StartUartHandler_prev = '1') then
+						      byteCounter <= 0;
                         StartUartHandler_prev <= StartUartHandler;
+								EndUartHandler <= '0';
                         UartHandlerState <= PREPARE_UART;
                     else
+						      TxPacket <= HandlerTxPacket(0)(0 to 7);
                         StartUartHandler_prev <= StartUartHandler;
                     end if;
                 
                 when PREPARE_UART => 
-                    UartHandlerState <= UART_BYTE;
-                    StartUart <= '1';
+						  if (StartUart = '0' and EndUart = '1') then
+								StartUart <= '1';
+								UartHandlerState <= UART_BYTE;
+						  end if;
 
                 when UART_BYTE =>
                     if (EndUart = '0') then --Uart send has been started
@@ -76,20 +82,21 @@ begin
                     end if;
 
                 when PREPARE_NEXT_BYTE =>
-                    if (EndUart = '1') then --Uart send has been ended
+                    if (EndUart = '1' and StartUart = '0') then --Uart send has been ended
                         HandlerRxPacket(byteCounter)(0 to 7) <= RxPacket(0 to 7); -- store the RxPacket in case readWrite is '0'
-                        if (byteCounter + 1) == UartSize then -- end the process
+                        if (byteCounter + 1) = UartSize then -- end the process
                             UartHandlerState <= STOP_STATE;
                         else
-                            TxPacket <= HandlerTxPacket(byteCounter + 1)(0 to 7);
-                            byteCounter := byteCounter + 1;
+                            TxPacket(0 to 7) <= HandlerTxPacket(byteCounter + 1)(0 to 7);
+                            byteCounter <= byteCounter + 1;
                             UartHandlerState <= PREPARE_UART;
                         end if;
                     end if;
 
                 when STOP_STATE =>
-                    byteCounter := 0;
-                    TxPacket := HandlerTxPacket(0)(0 to 7);
+                    byteCounter <= 0;
+                    TxPacket <= HandlerTxPacket(0)(0 to 7);
+						  EndUartHandler <= '1';
                     UartHandlerState <= IDLE_STATE;
 
                 when others => null;
