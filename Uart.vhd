@@ -11,7 +11,7 @@ entity Uart is
     port(ActlClk :  in std_logic := '1';
          Reset_n :  in std_logic := '0';
          Tx :       out std_logic := '1';
-         Rx :       in std_logic;
+         Rx :       in std_logic := '1';
          TxPacket:  in std_logic_vector(0 to 7);
          RxPacket:  out std_logic_vector(0 to 7);
          ReadWrite: in std_logic :='1';
@@ -37,7 +37,7 @@ architecture rtl of Uart is
     signal Clk_prev : std_logic := '1';
     signal Clk : std_logic := '1';
     signal Tx_reg : std_logic := '1';
-	signal Rx_reg : std_logic := '1';
+	 signal Rx_reg : std_logic := '1';
     signal ParityCounter : integer := 0;
     Signal UartState : UART_STATE := IDLE_STATE;
     signal BitCounter : integer := 0;

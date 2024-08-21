@@ -10,13 +10,13 @@ entity UartHandler is
     port(ActlClk :          in  std_logic := '1';
          Reset_n :          in std_logic := '0';
          Tx :               out std_logic := '1';
-         Rx :               in std_logic;
+         Rx :               in std_logic := '1';
          HandlerTxPacket:   in  UartArray := (others => (others => '0'));
          HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
          UartSize:          in integer := 3;
          ReadWrite:         in std_logic :='1';
          StartUartHandler:  in std_logic := '1';
-         EndUartHandler:    out std_logic := '1';
+         EndUartHandler:    out std_logic := '0';
          ParityBit :        in std_logic := '0');
 
 end UartHandler;
@@ -26,7 +26,7 @@ architecture rtl2 of UartHandler is
     signal StartUart: std_logic := '0';
     signal StartUartHandler_prev : std_logic := '1';
     signal EndUart: std_logic := '1'; 
-    signal TxPacket : std_logic_vector(0 to 7) := HandlerTxPacket(0)(0 to 7);
+    signal TxPacket : std_logic_vector(0 to 7);
     signal RxPacket : std_logic_vector(0 to 7) := x"00";
 	 signal byteCounter : integer  := 0;
     type UART_HANDLER_STATE is

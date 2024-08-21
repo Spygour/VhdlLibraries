@@ -17,11 +17,11 @@ end MainUart;
 architecture sim of MainUart is
     constant SystemClk : integer := 50000000;
     constant Baudrate : integer := 115200;
-    signal TxMessage : UartArray := (x"AA", x"FA", x"91", x"15",others => (others => '0'));
+    signal TxMessage : UartArray := (x"4D", x"41", x"4C", x"41", x"4B", x"41", x"53",others => (others => '0'));
     signal RxMessage : UartArray := (others => (others => '0'));
-    signal ReadWrite : std_logic := '0';
+    signal ReadWrite : std_logic := '1';
     signal ParityBit : std_logic := '0';
-    signal UartSize : integer := 4;
+    signal UartSize : integer := 7;
 	 signal EndHandler : std_logic := '0';
 
 begin
@@ -40,14 +40,6 @@ begin
              EndUartHandler   => EndHandler,
              ParityBit        => ParityBit);
 				 
-	process(EndHandler)
-	
-	begin
-		if (EndHandler = '1' and ReadWrite = '0') then
-			TxMessage <= RxMessage;
-			ReadWrite <= '1';
-		end if;
-	end process;
-    
+				 
 	EndUartHandler <= EndHandler;
 	end architecture;
