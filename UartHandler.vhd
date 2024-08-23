@@ -14,7 +14,7 @@ entity UartHandler is
          HandlerTxPacket:   in  UartArray := (others => (others => '0'));
          HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
          UartSize:          in integer := 3;
-         ReadWrite:         in std_logic :='1';
+         ReadWrite:         in std_logic;
          StartUartHandler:  in std_logic := '1';
          EndUartHandler:    out std_logic := '0';
          ParityBit :        in std_logic := '0');
@@ -24,11 +24,14 @@ end UartHandler;
 architecture rtl2 of UartHandler is
     constant UartLength : integer := UartSize;
     signal StartUart: std_logic := '0';
-    signal StartUartHandler_prev : std_logic := '1';
     signal EndUart: std_logic := '1'; 
     signal TxPacket : std_logic_vector(0 to 7);
     signal RxPacket : std_logic_vector(0 to 7) := x"00";
 	 signal byteCounter : integer  := 0;
+	 signal StartUartHandler_prev : std_logic := '0';
+	 signal Clk : std_logic := '1';
+	 signal Clk_prev : std_logic := '1';
+
     type UART_HANDLER_STATE is
         (IDLE_STATE,
          PREPARE_UART,
@@ -42,6 +45,7 @@ begin
     generic map(SystemClk   => SystemClk,
                 Baudrate    => Baudrate)
     port map(ActlClk   => ActlClk,
+				 Clk       => Clk,
              Reset_n   => Reset_n,
              Tx        => Tx,
              Rx        => Rx,
@@ -55,34 +59,35 @@ begin
     begin
         if Reset_n = '0' then
             byteCounter <= 0;
-            TxPacket <= HandlerTxPacket(0)(0 to 7);
+				Clk_prev <= '1';
+				UartHandlerState <= IDLE_STATE;
         elsif(ActlClk'event and ActlClk = '1') then
             case UartHandlerState is
                 when IDLE_STATE =>
-                    if (StartUartHandler = '0' and StartUartHandler_prev = '1') then
+                    if (StartUartHandler = '0' and StartUartHandler_prev='1') then
+								StartUartHandler_prev <= StartUartHandler;
+								TxPacket <= HandlerTxPacket(0)(0 to 7);
 						      byteCounter <= 0;
-                        StartUartHandler_prev <= StartUartHandler;
-								EndUartHandler <= '0';
                         UartHandlerState <= PREPARE_UART;
                     else
+								StartUartHandler_prev <= StartUartHandler;
 						      TxPacket <= HandlerTxPacket(0)(0 to 7);
-                        StartUartHandler_prev <= StartUartHandler;
+								EndUartHandler <= '1';
                     end if;
-                
-                when PREPARE_UART => 
-						  if (StartUart = '0' and EndUart = '1') then
+				    when PREPARE_UART => 
+							EndUartHandler <= '0';
+							if (StartUart = '0' and EndUart = '1') then
 								StartUart <= '1';
 								UartHandlerState <= UART_BYTE;
-						  end if;
-
+							end if;
                 when UART_BYTE =>
                     if (EndUart = '0') then --Uart send has been started
                         StartUart <= '0';
                         UartHandlerState <= PREPARE_NEXT_BYTE;
                     end if;
-
+                
                 when PREPARE_NEXT_BYTE =>
-                    if (EndUart = '1' and StartUart = '0') then --Uart send has been ended
+                    if (EndUart = '1') then --Uart send has been ended
                         HandlerRxPacket(byteCounter)(0 to 7) <= RxPacket(0 to 7); -- store the RxPacket in case readWrite is '0'
                         if (byteCounter + 1) = UartSize then -- end the process
                             UartHandlerState <= STOP_STATE;
@@ -92,15 +97,17 @@ begin
                             UartHandlerState <= PREPARE_UART;
                         end if;
                     end if;
-
+                
                 when STOP_STATE =>
-                    byteCounter <= 0;
-                    TxPacket <= HandlerTxPacket(0)(0 to 7);
-						  EndUartHandler <= '1';
-                    UartHandlerState <= IDLE_STATE;
-
+                       byteCounter <= 0;
+                       TxPacket <= HandlerTxPacket(0)(0 to 7);
+				        	  EndUartHandler <= '1';
+                       UartHandlerState <= IDLE_STATE;
+                        
                 when others => null;
-                end case;
+                    end case;
+               
+					--Clk_prev <= Clk;
         end if;
     end process;
 end architecture;
