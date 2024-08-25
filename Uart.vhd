@@ -78,7 +78,7 @@ begin
             ParityCounter <= 0;
 			ByteCounter <= 0;
 			Tx_Packet <= HandlerTxPacket(0)(0 to 7);
-        elsif(ActlClk'event and ActlClk = '1') then
+        elsif(rising_edge(ActlClk)) then
 				case UartState is
 					when IDLE_STATE =>
 					     if (StartUart = '1') then

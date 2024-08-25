@@ -94,7 +94,7 @@ begin
       DataCounter <= 0;
       BytesCounter := 0;
 		StartI2c_prev <= StartI2c;
-    elsif (ActlClk'event and ActlClk = '1') then
+    elsif (rising_edge(ActlClk)) then
       if (SdaClk_reg = '0' and SdaClk_regPrev = '1') then
         case I2cState is
           when IDLE_STATE =>
