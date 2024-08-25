@@ -1,3 +1,5 @@
+library work;
+use work.UartTypes.all;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -8,21 +10,23 @@ entity Uart is
     generic(SystemClk : integer := 50000000;
             Baudrate : integer := 115200);
 
-    port(ActlClk :  in std_logic := '1';
-			Clk     :  inout std_logic := '0';
-         Reset_n :  in std_logic := '0';
-         Tx :       out std_logic := '1';
-         Rx :       in std_logic := '1';
-         TxPacket:  in std_logic_vector(0 to 7);
-         RxPacket:  out std_logic_vector(0 to 7);
-         ReadWrite: in std_logic;
-         StartUart: in std_logic := '0';
-         EndUart :  out std_logic := '1';
-         ParityBit : in std_logic := '0');
+    port(ActlClk :          in std_logic := '1';
+		 Clk     :          inout std_logic := '0';
+         Reset_n :          in std_logic := '0';
+         Tx :               out std_logic := '1';
+         Rx :               in std_logic := '1';
+		 HandlerTxPacket:   in  UartArray := (others => (others => '0'));
+         HandlerRxPacket:   out UartArray := (others=> (others=>'0'));
+		 UartSize:          in integer := 3;
+         ReadWrite:         in std_logic;
+         StartUart:         in std_logic := '0';
+         EndUart :          out std_logic := '1';
+         ParityBit :        in std_logic := '0');
 end Uart;
 
 architecture rtl of Uart is
     constant UartPeriod : integer := SystemClk / (2*Baudrate) ;
+	 constant Size : integer := UartSize;
     type UART_STATE is
         (IDLE_STATE,
          START_STATE_WRITE,
@@ -40,8 +44,9 @@ architecture rtl of Uart is
     signal ParityCounter : integer := 0;
     Signal UartState : UART_STATE := IDLE_STATE;
     signal BitCounter : integer := 0;
-    signal Rw : std_logic;
-	 signal ClkStretch : std_logic := '0';
+	signal ClkStretch : std_logic := '0';
+    signal StartUartPrev : std_logic := '0';
+    signal ByteCounter : integer := 0;
 begin
     process(ActlClk,Reset_n) is
         variable Counter : integer range 0 to UartPeriod;
@@ -69,24 +74,27 @@ begin
         if Reset_n = '0' then
             UartState <= IDLE_STATE;
             EndUart <= '1';
-            Rw <= ReadWrite;
             BitCounter <= 0;
             ParityCounter <= 0;
+			ByteCounter <= 0;
+			Tx_Packet <= HandlerTxPacket(0)(0 to 7);
         elsif(ActlClk'event and ActlClk = '1') then
 				case UartState is
 					when IDLE_STATE =>
 					     if (StartUart = '1') then
-						   Tx_Packet <= TxPacket;
-                       if Rw = '1' then
-								 ClkStretch <= '0';
-								 EndUart <= '0';
-                           UartState <= START_STATE_WRITE;
-                       else
-								 EndUart <= '0';
-                         UartState <= START_STATE_READ;
-								 ClkStretch <= '1';
+                           StartUartPrev <= StartUart;
+						   Tx_Packet <= HandlerTxPacket(0)(0 to 7);
+                            if ReadWrite = '1' then
+								ClkStretch <= '0';
+								EndUart <= '0';
+                                UartState <= START_STATE_WRITE;
+                            else
+								EndUart <= '0';
+                                UartState <= START_STATE_READ;
+								ClkStretch <= '1';
 							end if;
 						else
+                            StartUartPrev <= StartUart;
 							ClkStretch <= '1';
 						end if;
 					when START_STATE_READ =>
@@ -127,19 +135,26 @@ begin
 
                     when STOP_STATE_WRITE =>
                        Tx_reg <= '1';
-					   BitCounter <= 0;
-                       UartState <= IDLE_STATE;
-							  Rw <= ReadWrite;
-                       EndUart <= '1';
+							  BitCounter <= 0;
+							  if ByteCounter = UartSize-1 then
+                                ByteCounter <= 0;
+								UartState <= IDLE_STATE;
+								EndUart <= '1';
+							  else
+								Tx_Packet <= HandlerTxPacket(ByteCounter + 1)(0 to 7);
+								ByteCounter <= ByteCounter + 1;
+								UartState <= START_STATE_WRITE;
+						     end if;
 
                     when DATA_STATE_READ =>
                        if BitCounter = 7 then
-                        if ParityBit = '0' then
-                            UartState <= STOP_STATE_READ;
-                        else
-                            UartState <= PARITY_STATE_READ;
-                        end if;
-							  end if;
+							HandlerRxPacket(ByteCounter)(0 to 7) <= Rx_Packet;
+                            if ParityBit = '0' then
+                                UartState <= STOP_STATE_READ;
+                            else
+                                UartState <= PARITY_STATE_READ;
+                            end if;
+					   end if;
                        Rx_Packet(7-BitCounter) <= Rx;
                        if Rx = '1' then
                         ParityCounter <= ParityCounter + 1;
@@ -149,21 +164,24 @@ begin
                     when PARITY_STATE_READ =>
                        UartState <= STOP_STATE_READ;
 
-
                     when STOP_STATE_READ =>
 							  BitCounter <= 0;
-                       UartState <= IDLE_STATE;
-							  Rw <= ReadWrite;
-					   EndUart <= '1';
+							  if ByteCounter = UartSize-1 then
+								UartState <= IDLE_STATE;
+								EndUart <= '1';
+							  else
+								ByteCounter <= ByteCounter + 1;
+								ClkStretch <= '1';
+								UartState <= START_STATE_READ;
+							  end if;
 						
-						when others => null;
+					when others => null;
 
                 end case;
 				end if;
         end if;
     end process;
                    
-   RxPacket <= Rx_Packet;
    Tx <= Tx_reg;
 
 
