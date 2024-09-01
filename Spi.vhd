@@ -15,7 +15,7 @@ entity Spi is
          SpiClk   : inout std_logic := '0';
          Reset_n  : in std_logic := '0';
          Mosi     : out std_logic := '1';
-         Miso     : in  std_logic := '1';
+         Miso     : in  std_logic := 'Z';
          CS       : out std_logic := '1';
          SpiTxMsg : in  SpiArray  := (others => (others => '0'));
          SpiRxMsg : out SpiArray  := (others => (others => '0'));
@@ -34,13 +34,12 @@ signal StartClk       : std_logic := '0';
 signal SpiClkCounter  : integer := 0;
 signal SpiBitCounter  : integer := 0;
 signal SpiByteCounter : integer := 0;
-signal StartSpi_prev  : std_logic := '0';
 signal SpiTxByte      : std_logic_vector(0 to 7) := (others => '0');
 signal SpiRxByte      : std_logic_vector(0 to 7) := (others => '0');
 signal Mosi_reg       : std_logic := '1';
 signal Cs_reg         : std_logic := '1';
-signal Mosi_Clk       : std_logic := '0';
-signal Mosi_Clk_prev  : std_logic := '0';
+signal Mosi_Clk       : std_logic := '1';
+signal Mosi_Clk_prev  : std_logic := '1';
 
 type Spi_State is
     (IDLE_STATE,
@@ -92,9 +91,8 @@ begin
         elsif rising_edge(ActlClk) then
             case SpiState is
                 when IDLE_STATE =>
-                   if(StartSpi = '0' and StartSpi_prev = '1') then
+                   if(StartSpi = '1') then
                         Cs_reg <= '0';
-                        StartSpi_prev <= StartSpi;
                         SpiBitCounter <= 0;
                         SpiByteCounter <= 0;
                         SpiTxByte(0 to 7) <= SpiTxMsg(0)(0 to 7); 
@@ -102,8 +100,6 @@ begin
                         StartClk <= '1';
                         EndSpi <= '0';
                         SpiState <= WRITE_SPI;
-                   else
-                        StartSpi_prev <= StartSpi;
                    end if;
 
                 when EVALUATE_BYTE =>
@@ -133,7 +129,6 @@ begin
                     when WRITE_SPI =>
                         Mosi_reg <= SpiTxByte(SpiBitCounter);
 						SpiState <= READ_SPI;
-
                     when others => null;
                 end case;
 			end if;
