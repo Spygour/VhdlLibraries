@@ -95,7 +95,7 @@ begin
                         Cs_reg <= '0';
                         SpiBitCounter <= 0;
                         SpiByteCounter <= 0;
-                        SpiTxByte(0 to 7) <= SpiTxMsg(0)(0 to 7); 
+                        SpiTxByte(0 to 7) <= std_logic_vector(SpiTxMsg(0)(0 to 7)); 
                         SpiRxByte(0 to 7) <= (others => '0');
                         StartClk <= '1';
                         EndSpi <= '0';
@@ -104,11 +104,11 @@ begin
 
                 when EVALUATE_BYTE =>
                    SpiBitCounter <= 0;
-                   SpiRxMsg(SpiByteCounter - 1)(0 to 7) <= SpiRxByte;
+                   SpiRxMsg(SpiByteCounter - 1)(0 to 7) <= unsigned(SpiRxByte);
                    if (SpiByteCounter = SpiBytes) then
                         SpiState <= END_STATE;
                    else
-                        SpiTxByte(0 to 7) <= SpiTxMsg(SpiByteCounter)(0 to 7);
+                        SpiTxByte(0 to 7) <= std_logic_vector(SpiTxMsg(SpiByteCounter)(0 to 7));
                         SpiState <= WRITE_SPI;
                    end if;
                    
@@ -138,7 +138,7 @@ begin
                     when READ_SPI =>
                         SpiRxByte(SpiBitCounter) <= Miso;
                         if (SpiBitCounter + 1) = 8 then
-                            SpiRxMsg(SpiByteCounter)(0 to 7) <= SpiRxByte;
+                            SpiRxMsg(SpiByteCounter)(0 to 7) <= unsigned(SpiRxByte);
                             SpiByteCounter <= SpiByteCounter + 1;
                             SpiState <= EVALUATE_BYTE;
                         else
