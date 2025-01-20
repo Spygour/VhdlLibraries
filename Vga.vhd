@@ -55,7 +55,8 @@ architecture rtl of Vga is
             BACK_PORCH_STATE,
             ACTIVE_STATE,
             EXTEND_STATE,
-            FRONT_PORCH
+            FRONT_PORCH,
+	    PREPARE_PULSE
         );
 
     signal HsyncState : Sync_State := IDLE_STATE;
@@ -87,7 +88,7 @@ begin
                         HsyncClk_reg <= not HsyncClk_reg;
                         x_axis <= (others => '0');
                     else
-                        --HsyncComplete <= '0';
+                        HsyncComplete <= '0';
                     end if;
                     HsyncCounter <= HsyncCounter+1;
 
@@ -110,20 +111,22 @@ begin
                     HsyncCounter <= HsyncCounter+1;
 
                 when FRONT_PORCH =>
-                    if (HsyncCounter = HsyncPeriod ) then
-                        if (VsyncCounter > VsyncPeriod)  then
-                            VsyncCounter <= 1;
-                        else
-                            -- 0x274 = 628 
-                            VsyncCounter <= VsyncCounter + 1;
+                    if (HsyncCounter = (HsyncPeriod - 1) ) then
+                        VsyncCounter <= VsyncCounter + 1;
                         end if;
                         HsyncComplete <= '1';
                         HsyncCounter <= 0;
-                        HsyncState <= PULSE_STATE;
-                        HsyncClk_reg <= not HsyncClk_reg;
+                        HsyncState <= PREPARE_PULSE;
                     else
                         HsyncCounter <= HsyncCounter+1;
                     end if;
+
+		when PREPARE_PULSE =>
+		  HsyncClk_reg <= not HsyncClk_reg;
+		  HsyncState <= PULSE_STATE;
+		  if (VsyncCounter = VsyncPeriod) then
+		       VsyncCounter <= 0;
+		 end if;
 						
                 when others => null;
             end case;
@@ -148,7 +151,7 @@ begin
                     if (VsyncCounter = VsyncDuty) then
                         VsyncState <= BACK_PORCH_STATE;
                         VsyncClk_reg <= not VsyncClk_reg;
-						VsyncComplete <= '0';
+			VsyncComplete <= '0';
                     end if;
 
                 when BACK_PORCH_STATE =>
@@ -165,7 +168,7 @@ begin
                     end if;
                 
                 when FRONT_PORCH =>
-                    if (VsyncCounter = VsyncPeriod) then
+                    if ((VsyncCounter = VsyncPeriod) and (HsynState = PREPARE_PULSE))  then
                         y_axis <=  (others => '0');
                         VsyncState <= PULSE_STATE;
                         VsyncClk_reg <= not VsyncClk_reg;
