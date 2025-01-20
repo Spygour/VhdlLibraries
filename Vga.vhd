@@ -26,7 +26,7 @@ entity Vga is
          LineColor : in LineColor_t := (others => (others => '0'));
          x_axis   : inout unsigned (9 downto 0) := (others => '0');
          y_axis   : inout unsigned (9 downto 0) := (others => '0');
-		 HsyncComplete : inout std_logic := '0';
+	 HsyncComplete : inout std_logic := '0';
          VsyncComplete  : out std_logic := '0');
 
 end Vga;
