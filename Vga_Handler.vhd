@@ -19,7 +19,7 @@ entity Vga_Handler is
          B_0 : out std_logic := '0';
          B_1 : out std_logic := '0';
          B_2 : out std_logic := '0';
-		VsyncComplete : out std_logic := '0'
+	VsyncComplete : out std_logic := '0'
     );
 end Vga_Handler;
 
@@ -34,7 +34,7 @@ architecture rtl of Vga_Handler is
     signal y_axis   : unsigned (9 downto 0) := (others => '0');
     signal x_axis_write   : unsigned (9 downto 0) := (others => '0');
     signal locked : std_logic := '1';
-	signal HsyncComplete : std_logic := '0';
+    signal HsyncComplete : std_logic := '0';
     signal Reset_Sync : std_logic := '1';
     signal Reset_Reg : std_logic := '1';
 	 
@@ -70,14 +70,14 @@ begin
                  LineColor => LineColor,
                  x_axis    => x_axis,
                  y_axis    => y_axis,
-				 HsyncComplete => HsyncComplete,
-				 VsyncComplete => VsyncComplete);
+		 HsyncComplete => HsyncComplete,
+		 VsyncComplete => VsyncComplete);
 
     process(ColorClk, Reset_Sync)
     begin
         if (Reset_Sync = '1') then
             LineColor <= (others => (others => '0'));
-			x_axis_write <= (others => '0');
+	    x_axis_write <= (others => '0');
         elsif rising_edge(ColorClk) then
 			   -- 0xC7 = 199
             if ( (y_axis=x"C7") and (x_axis>x_axis_write)) then
@@ -86,18 +86,18 @@ begin
                     -- 0x1FF = 255
                     LineColor(to_integer(x_axis_write)) <= X"1FF";
                     x_axis_write <= x_axis_write + 1;
-					 -- 0x320 = 800
+		-- 0x320 = 800
                 elsif (x_axis= x"320") then
                     x_axis_write <= (others => '0');
                 end if;
-			   -- 500 = 0x1F4
+	   -- 500 = 0x1F4
             elsif ( (y_axis=X"1F4") and (x_axis>x_axis_write) ) then
-					 -- 0xC8 = 200
+		-- 0xC8 = 200
                 if (x_axis_write > x"C8" and x_axis_write<x"190") then
                     -- 0x000 = 0
                     LineColor(to_integer(x_axis_write)) <= X"000";
                     x_axis_write <= x_axis_write + 1;
-					 -- 0x320 = 800
+		-- 0x320 = 800
                 elsif (x_axis= x"320") then
                     x_axis_write <= (others => '0');
                 end if;
