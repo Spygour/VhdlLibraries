@@ -103,7 +103,7 @@ begin
                         HsyncState <= FRONT_PORCH;
                     else
                         -- 0x320 = 800
-                        if (x_axis < X"320") then
+                        if ((x_axis < X"320") and (VsyncState <= ACTIVE_STATE)) then
                             x_axis <= x_axis + 1;
                         end if;
                     end if;
@@ -136,7 +136,7 @@ begin
         if (Reset_n = '1') then
             VsyncClk_reg <= '1';
             VsyncState <= IDLE_STATE;
-				VsyncComplete <= '0';
+	    VsyncComplete <= '0';
         elsif rising_edge(ColorClk) then --Here we should increase the counter
             case VsyncState is
                 when IDLE_STATE =>
@@ -158,7 +158,7 @@ begin
                 
                 when ACTIVE_STATE =>
                     if (VsyncCounter = VsyncActive) then
-						VsyncComplete <= '1';
+			VsyncComplete <= '1';
                         VsyncState <= FRONT_PORCH;
                     elsif HsyncComplete = '1' then
                         y_axis <= y_axis + 1;
