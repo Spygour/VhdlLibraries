@@ -14,15 +14,9 @@ entity Vga is
          ColorClk : in std_logic  := '0';
          HsyncClk : out std_logic := '1';
          VsyncClk : out std_logic := '1';
-         R_0      : out std_logic := '0';
-         R_1      : out std_logic := '0';
-         R_2      : out std_logic := '0';
-         G_0      : out std_logic := '0';
-         G_1      : out std_logic := '0';
-         G_2      : out std_logic := '0';
-         B_0      : out std_logic := '0';
-         B_1      : out std_logic := '0';
-         B_2      : out std_logic := '0';
+         R    : out std_logic_vector (7 downto 0) := (others => '0');
+         G    : out std_logic_vector (7 downto 0) := (others => '0');
+         B    : out std_logic_vector (7 downto 0) := (others => '0');
          LineColor : in LineColor_t := (others => (others => '0'));
          x_axis   : inout unsigned (9 downto 0) := (others => '0');
          y_axis   : inout unsigned (9 downto 0) := (others => '0');
@@ -184,36 +178,18 @@ begin
     process(ColorClk, Reset_n) is
     begin
         if (Reset_n = '1') then
-            R_0 <= '0';
-            R_1 <= '0';
-            R_2 <= '0';
-            G_0 <= '0';
-            G_1 <= '0';
-            G_2 <= '0';
-            B_0 <= '0';
-            B_1 <= '0';
-            B_2 <= '0';
+            R <= (others => '0');
+	    G <= (others => '0');
+	    B <= (others => '0');
         elsif rising_edge(ColorClk) then --Here we should increase the counter
             if (HsyncState = ACTIVE_STATE and VsyncState = ACTIVE_STATE) then
-                R_0 <= LineColor(to_integer(x_axis)) (0);
-                R_1 <= LineColor(to_integer(x_axis)) (1);
-                R_2 <= LineColor(to_integer(x_axis)) (2);
-                G_0 <= LineColor(to_integer(x_axis)) (3);
-                G_1 <= LineColor(to_integer(x_axis)) (4);
-                G_2 <= LineColor(to_integer(x_axis)) (5);
-                B_0 <= LineColor(to_integer(x_axis)) (6);
-                B_1 <= LineColor(to_integer(x_axis)) (7);
-                B_2 <= LineColor(to_integer(x_axis)) (8);
+                R <= LineColor(to_integer(x_axis)) (23 downto 16);
+                B <= LineColor(to_integer(x_axis)) (15 downto 8);
+                G <= LineColor(to_integer(x_axis)) (7 downto 0);
             else
-                R_0 <= '0';
-                R_1 <= '0';
-                R_2 <= '0';
-                G_0 <= '0';
-                G_1 <= '0';
-                G_2 <= '0';
-                B_0 <= '0';
-                B_1 <= '0';
-                B_2 <= '0';
+                R <= (others => '0');
+		G <= (others => '0');
+		B <= (others => '0');
             end if;
         end if;
     end process;
