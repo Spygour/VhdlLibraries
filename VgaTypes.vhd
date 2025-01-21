@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 package VgaTypes is 
     -- 8 bits per color (We hope)
     type LineColor_t is array (0 to 800) of std_logic_vector(23 downto 0);
+    type LineBuffer_t is array (0 to 2) of LineColor_t;
 
 
     type Sprite_t is record
