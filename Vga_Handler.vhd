@@ -24,14 +24,14 @@ architecture rtl of Vga_Handler is
     constant HsyncFreq : integer := 37680;
 
     signal ColorClk :  std_logic  := '0';
-    signal LineColor : LineColor_t := (others => (others => '0'));
+    signal LineBuffer : LineBuffer_t := (others => (others => (others => '0')));
     signal x_axis   : unsigned (9 downto 0) := (others => '0');
     signal y_axis   : unsigned (9 downto 0) := (others => '0');
-    signal x_axis_write   : unsigned (9 downto 0) := (others => '0');
     signal locked : std_logic := '1';
     signal HsyncComplete : std_logic := '0';
     signal Reset_Sync : std_logic := '1';
     signal Reset_Reg : std_logic := '1';
+    signal BufferIndex : std_logic := '0';
 	 
 begin
 	VgaPll:entity work.VgaPll(SYN)
@@ -56,11 +56,12 @@ begin
                  G         => G,
                  B         => B,  
                  --LineCycle => LineCycle,
-                 LineColor => LineColor,
+                 LineBuffer => LineBuffer,
                  x_axis    => x_axis,
                  y_axis    => y_axis,
 		 HsyncComplete => HsyncComplete,
-		 VsyncComplete => VsyncComplete);
+		 VsyncComplete => VsyncComplete,
+		 BufferIndex => BufferIndex);
 
     process(ColorClk, Reset_Sync)
     begin
@@ -69,27 +70,15 @@ begin
 	    x_axis_write <= (others => '0');
         elsif rising_edge(ColorClk) then
 	    -- 0xC7 = 199
-            if ( (y_axis=x"C7") and (x_axis>x_axis_write)) then
-		-- 0xC8 = 200 0X190 = 400
-                if (x_axis_write > x"C8" and x_axis_write<X"190") then
-                    -- 0x1FF = 255
-                    LineColor(to_integer(x_axis_write)) <= X"FF0000";
-                    x_axis_write <= x_axis_write + 1;
-		-- 0x320 = 800
-                elsif (x_axis= x"320") then
-                    x_axis_write <= (others => '0');
-                end if;
-	   -- 500 = 0x1F4
-            elsif ( (y_axis=X"1F4") and (x_axis>x_axis_write) ) then
-		-- 0xC8 = 200
-                if (x_axis_write > x"C8" and x_axis_write<x"190") then
-                    -- 0x000 = 0
-                    LineColor(to_integer(x_axis_write)) <= X"000000";
-                    x_axis_write <= x_axis_write + 1;
-		-- 0x320 = 800
-                elsif (x_axis= x"320") then
-                    x_axis_write <= (others => '0');
-                end if;
+            if (y_axis=x"C7") and (HsyncComplete = '0') then
+                -- 0x1FF = 255
+		LineColor(to_integer(BufferIndex xor '1')) (400 downto 200) <= X"FF0000";
+	    elsif y_axis=x"C7") and (HsyncComplete = '1') then
+		BufferIndex <= BufferIndex xor '1';
+            elsif ( y_axis=x"C8" and HsyncComplete = '0') then
+		LineColor(to_integer(BufferIndex xor '1')) (400 downto 200) <= X"000000";
+	    elsif ( y_axis=x"C8" and (HsyncComplete = '1') then
+                BufferIndex <= BufferIndex xor '1';
             end if;
         end if;
     end process;
