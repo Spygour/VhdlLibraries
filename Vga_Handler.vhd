@@ -10,15 +10,10 @@ entity Vga_Handler is
          InputClk : in std_logic := '0';
          HsyncClk : out std_logic := '1';
          VsyncClk : out std_logic := '1';
-         R_0 : out std_logic := '0';
-         R_1 : out std_logic := '0';
-         R_2 : out std_logic := '0';
-         G_0 : out std_logic := '0';
-         G_1 : out std_logic := '0';
-         G_2 : out std_logic := '0';
-         B_0 : out std_logic := '0';
-         B_1 : out std_logic := '0';
-         B_2 : out std_logic := '0';
+         R : out std_logic_vector (7 downto 0) := (others => '0');
+	 G : out std_logic_vector (7 downto 0) := (others => '0');
+	 B : out std_logic_vector (7 downto 0) := (others => '0');
+         
 	VsyncComplete : out std_logic := '0'
     );
 end Vga_Handler;
@@ -57,15 +52,9 @@ begin
                  ColorClk  => ColorClk,
                  HsyncClk  => HsyncClk,
                  VsyncClk  => VsyncClk,
-                 R_0       => R_0,    
-                 R_1       => R_1,    
-                 R_2       => R_2,    
-                 G_0       => G_0,    
-                 G_1       => G_1,    
-                 G_2       => G_2,    
-                 B_0       => B_0,    
-                 B_1       => B_1,    
-                 B_2       => B_2,
+                 R         => R,    
+                 G         => G,
+                 B         => B,  
                  --LineCycle => LineCycle,
                  LineColor => LineColor,
                  x_axis    => x_axis,
@@ -79,12 +68,12 @@ begin
             LineColor <= (others => (others => '0'));
 	    x_axis_write <= (others => '0');
         elsif rising_edge(ColorClk) then
-			   -- 0xC7 = 199
+	    -- 0xC7 = 199
             if ( (y_axis=x"C7") and (x_axis>x_axis_write)) then
-					 -- 0xC8 = 200 0X190 = 400
+		-- 0xC8 = 200 0X190 = 400
                 if (x_axis_write > x"C8" and x_axis_write<X"190") then
                     -- 0x1FF = 255
-                    LineColor(to_integer(x_axis_write)) <= X"1FF";
+                    LineColor(to_integer(x_axis_write)) <= X"FF0000";
                     x_axis_write <= x_axis_write + 1;
 		-- 0x320 = 800
                 elsif (x_axis= x"320") then
@@ -95,7 +84,7 @@ begin
 		-- 0xC8 = 200
                 if (x_axis_write > x"C8" and x_axis_write<x"190") then
                     -- 0x000 = 0
-                    LineColor(to_integer(x_axis_write)) <= X"000";
+                    LineColor(to_integer(x_axis_write)) <= X"000000";
                     x_axis_write <= x_axis_write + 1;
 		-- 0x320 = 800
                 elsif (x_axis= x"320") then
