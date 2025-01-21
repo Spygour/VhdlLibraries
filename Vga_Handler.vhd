@@ -31,7 +31,8 @@ architecture rtl of Vga_Handler is
     signal HsyncComplete : std_logic := '0';
     signal Reset_Sync : std_logic := '1';
     signal Reset_Reg : std_logic := '1';
-    signal BufferIndex : std_logic := '0';
+    signal BufferIndex : integer := 0;
+	 signal BufferIndex_tmp: integer := 1; --temp value of BufferIndex
 	 
 begin
 	VgaPll:entity work.VgaPll(SYN)
@@ -59,26 +60,31 @@ begin
                  LineBuffer => LineBuffer,
                  x_axis    => x_axis,
                  y_axis    => y_axis,
-		 HsyncComplete => HsyncComplete,
-		 VsyncComplete => VsyncComplete,
-		 BufferIndex => BufferIndex);
+		         HsyncComplete => HsyncComplete,
+		         VsyncComplete => VsyncComplete,
+		         LineBufferIndex => BufferIndex);
 
     process(ColorClk, Reset_Sync)
     begin
         if (Reset_Sync = '1') then
-            LineColor <= (others => (others => '0'));
-	    x_axis_write <= (others => '0');
+                LineBuffer <= (others => (others => (others => '0')));
+				BufferIndex_tmp <= 1;
+				BufferIndex <= 0;
         elsif rising_edge(ColorClk) then
 	    -- 0xC7 = 199
             if (y_axis=x"C7") and (HsyncComplete = '0') then
                 -- 0x1FF = 255
-		LineColor(to_integer(BufferIndex xor '1')) (400 downto 200) <= X"FF0000";
-	    elsif y_axis=x"C7") and (HsyncComplete = '1') then
-		BufferIndex <= BufferIndex xor '1';
+					 if (x_axis > x"C8" and x_axis < x"190") then
+						LineBuffer(BufferIndex_tmp) (to_integer(x_axis)) <= X"FF0000";
+					end if;
+	        elsif (y_axis=x"C7") and (HsyncComplete = '1') then
+		        BufferIndex_tmp <= 0;
+		        BufferIndex <= 1;
             elsif ( y_axis=x"C8" and HsyncComplete = '0') then
-		LineColor(to_integer(BufferIndex xor '1')) (400 downto 200) <= X"000000";
-	    elsif ( y_axis=x"C8" and (HsyncComplete = '1') then
-                BufferIndex <= BufferIndex xor '1';
+		        LineBuffer(BufferIndex_tmp) (to_integer(x_axis)) <= X"00FFFF";
+	        elsif ( y_axis=x"C8" and HsyncComplete = '1') then
+                BufferIndex <= 0;
+				BufferIndex_tmp <= 1;
             end if;
         end if;
     end process;

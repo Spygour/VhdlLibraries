@@ -22,7 +22,7 @@ entity Vga is
          y_axis   : inout unsigned (9 downto 0) := (others => '0');
 	 HsyncComplete : inout std_logic := '0';
          VsyncComplete  : out std_logic := '0';
-	 LineBufferIndex : in std_logic := '0');
+	 LineBufferIndex : in integer  := 0);
 
 end Vga;
 
@@ -164,7 +164,7 @@ begin
                     end if;
                 
                 when FRONT_PORCH =>
-                    if ((VsyncCounter = VsyncPeriod) and (HsynState = PREPARE_PULSE))  then
+                    if ((VsyncCounter = VsyncPeriod) and (HsyncState = PREPARE_PULSE))  then
                         y_axis <=  (others => '0');
                         VsyncState <= PULSE_STATE;
                         VsyncClk_reg <= not VsyncClk_reg;
@@ -184,9 +184,9 @@ begin
 	    B <= (others => '0');
         elsif rising_edge(ColorClk) then --Here we should increase the counter
             if (HsyncState = ACTIVE_STATE and VsyncState = ACTIVE_STATE) then
-                R <= LineColor(to_integer(LineBufferIndex)) (to_integer(x_axis)) (23 downto 16);
-                B <= LineColor(to_integer(LineBufferIndex)) (to_integer(x_axis)) (15 downto 8);
-                G <= LineColor(to_integer(LineBufferIndex)) (to_integer(x_axis)) (7 downto 0);
+                R <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (23 downto 16);
+                G <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (15 downto 8);
+                B <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (7 downto 0);
             else
                 R <= (others => '0');
 		G <= (others => '0');
