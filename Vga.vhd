@@ -17,11 +17,12 @@ entity Vga is
          R    : out std_logic_vector (7 downto 0) := (others => '0');
          G    : out std_logic_vector (7 downto 0) := (others => '0');
          B    : out std_logic_vector (7 downto 0) := (others => '0');
-         LineColor : in LineColor_t := (others => (others => '0'));
+         LineBuffer : in LineBuffer_t := (others => (others => (others => '0')));
          x_axis   : inout unsigned (9 downto 0) := (others => '0');
          y_axis   : inout unsigned (9 downto 0) := (others => '0');
 	 HsyncComplete : inout std_logic := '0';
-         VsyncComplete  : out std_logic := '0');
+         VsyncComplete  : out std_logic := '0';
+	 LineBufferIndex : in std_logic := '0');
 
 end Vga;
 
@@ -183,9 +184,9 @@ begin
 	    B <= (others => '0');
         elsif rising_edge(ColorClk) then --Here we should increase the counter
             if (HsyncState = ACTIVE_STATE and VsyncState = ACTIVE_STATE) then
-                R <= LineColor(to_integer(x_axis)) (23 downto 16);
-                B <= LineColor(to_integer(x_axis)) (15 downto 8);
-                G <= LineColor(to_integer(x_axis)) (7 downto 0);
+                R <= LineColor(to_integer(LineBufferIndex)) (to_integer(x_axis)) (23 downto 16);
+                B <= LineColor(to_integer(LineBufferIndex)) (to_integer(x_axis)) (15 downto 8);
+                G <= LineColor(to_integer(LineBufferIndex)) (to_integer(x_axis)) (7 downto 0);
             else
                 R <= (others => '0');
 		G <= (others => '0');
