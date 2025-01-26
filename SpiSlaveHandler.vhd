@@ -13,7 +13,7 @@ entity SpiSlaveHandler is
          SI     : in  std_logic := '0';
          CS       : in std_logic := '1';
 			Leds  : out std_logic_vector (0 to 7) := "11111111";
-         EndSpiPort : out std_logic := '0');
+         SpiReady : out std_logic := '0');
 
 end SpiSlaveHandler;
 
@@ -85,7 +85,7 @@ begin
 				StartSpi <= '0';
 				memoryPart := '0';
         SpiHandlerState <= IDLE_STATE;
-        EndSpiPort <= '0';
+        SpiReady <= '0';
 		  Leds <= "11111111";
         elsif rising_edge(Clk) and SpiPllLocked = '1' then
           case SpiHandlerState is
@@ -94,7 +94,7 @@ begin
               SpiHandlerState <= ACTIVATE_SPI;
 
             when ACTIVATE_SPI =>
-              EndSpiPort <= '1';
+              SpiReady <= '1';
               ReadAddress <= WriteAddress;
               SpiHandlerState <= RUN_STATE;
 
@@ -115,7 +115,7 @@ begin
               if (EndSpi = '1') then
                 memoryPart := not memoryPart;
                 SpiHandlerState <= IDLE_STATE;
-                EndSpiPort <= '0';
+                SpiReady <= '0';
               end if;
           
             when others => NULL;

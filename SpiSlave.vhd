@@ -28,7 +28,7 @@ architecture rtl of SpiSlave is
 constant SpiBits : integer   := 16;
 constant SpiWords : integer := 100;
 
-signal SpiBitCounter  : integer := 0;
+signal SpiBitCnt  : unsigned (4 downto 0) := (others => '0');
 signal SpiWordCounter : integer := 0;
 signal CS_reg : std_logic := '0';
 signal SI_reg : std_logic := '0';
@@ -49,7 +49,7 @@ begin
     process(Clk, Reset_n) is
     begin
         if (Reset_n = '1') then
-            SpiBitCounter <= 0;
+            SpiBitCnt <= (others => '0');
             SpiWordCounter <= 0;
             SpiSlaveState <= IDLE_STATE;
             WriteAddress <= (others => '0');
@@ -64,7 +64,7 @@ begin
                         Words_reg <= 0;
                         SpiSlaveState <= READ_BIT;
                         EndSpi <= '0';
-                        SpiBitCounter <= 0;
+                        SpiBitCnt <= (others => '0');
                         SpiWordCounter <= 0;
                         SO <= '0';
                         -- Store Word
@@ -76,15 +76,16 @@ begin
                         WriteDataWord <= SpiRxWord;
                         SpiSlaveState <= END_STATE;
                     elsif (SpiClk_reg = '1') then
-                        SpiRxWord(SpiBitCounter) <= SI_reg;
+                        SpiRxWord(to_integer(SpiBitCnt)) <= SI_reg;
                         SpiSlaveState <= DECEIDE_STATE;
                     end if;
                     WrEn <= '1';
                 
                 when DECEIDE_STATE =>
-                    if (SpiBitCounter=SpiBits) then
-                        SpiBitCounter <= 0;
+                    if (SpiBitCnt=x"10") then
+                        SpiBitCnt <= (others => '0');
                         WriteDataWord <= SpiRxWord;
+                        SpiTxWord <= SpiRxWord;
                         if (SpiWordCounter = SpiWords) then
                             SpiSlaveState <= END_STATE;
                         elsif SpiWordCounter < SpiWords then
@@ -94,7 +95,8 @@ begin
                             SpiSlaveState <= WRITE_BIT; 
                         end if;
                     else
-                        SpiBitCounter <= SpiBitCounter + 1;
+                        SO <= SpiTxWord(to_integer(SpiBitCnt));
+                        SpiBitCnt <= SpiBitCnt + 1;
                         SpiSlaveState <= READ_BIT;
                     end if;
                     
@@ -105,8 +107,8 @@ begin
                             WrEn <= '0';
                             -- Update Write Address
                             WriteAddress <= std_logic_vector(unsigned(WriteAddress) + 1);
-                            SO <= SpiRxWord(SpiBitCounter);
-                            SpiBitCounter <= SpiBitCounter + 1;
+                            SO <= '0';
+                            SpiBitCnt <= (others => '0');
                             SpiSlaveState <= READ_BIT;
                         elsif (StartSpi = '0') then
                             -- Store Word
