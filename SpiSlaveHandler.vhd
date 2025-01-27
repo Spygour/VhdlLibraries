@@ -83,10 +83,10 @@ begin
 	 variable memoryPart : std_logic := '0';
     begin
         if (Reset_n = '1') then
-				StartSpi <= '0';
-				memoryPart := '0';
-        SpiHandlerState <= IDLE_STATE;
-        SpiReady <= '0';
+		StartSpi <= '0';
+		memoryPart := '0';
+        	SpiHandlerState <= IDLE_STATE;
+        	SpiReady <= '0';
 		  Leds <= "11111111";
         elsif rising_edge(Clk) and SpiPllLocked = '1' then
           case SpiHandlerState is
@@ -100,7 +100,10 @@ begin
               SpiHandlerState <= END_STATE;
             
             when END_STATE =>
-              if (WrEn = '0') then
+	     -- Set SpiReady to avoid the uC to send Data
+	      SpiReady <= '0';
+	      StartSpi <= '0';
+              if (EndSpi = '1') then
                 if (memoryPart = '0') then
                   Leds <= ReadDataWord(0 to 7);
                 else
@@ -108,11 +111,6 @@ begin
                 end if;
                 SpiHandlerState <= IDLE_STATE;
               end if;
-              if (EndSpi = '1') then
-                SpiReady <= '0';
-                memoryPart := not memoryPart;
-              end if;
-          
             when others => NULL;
 
           end case;
