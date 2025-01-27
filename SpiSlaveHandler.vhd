@@ -87,7 +87,7 @@ begin
 		memoryPart := '0';
         	SpiHandlerState <= IDLE_STATE;
         	SpiReady <= '0';
-		  Leds <= "11111111";
+		Leds <= "11111111";
         elsif rising_edge(Clk) and SpiPllLocked = '1' then
           case SpiHandlerState is
             when IDLE_STATE =>
@@ -115,7 +115,7 @@ begin
 
           end case;
             
-		    end if;
+	end if;
     end process;
 
 end architecture;
