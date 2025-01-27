@@ -7,16 +7,16 @@ package SpiSlaveTypes is
 	 
 	 type Spi_State is
     (IDLE_STATE,
-	 READ_BIT,
-     DECEIDE_STATE,
-     WRITE_BIT,
+	 RISE_DETECT,
+     CLOCK_HIGH,
+     FALL_DETECT,
+     CLOCK_LOW,
      END_STATE);
 
      type Spi_Handler_State is
     (IDLE_STATE,
      ACTIVATE_SPI,
      RUN_STATE,
-     READING_STATE,
      END_STATE
     );
 end SpiSlaveTypes;

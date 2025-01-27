@@ -75,7 +75,8 @@ begin
         WrEn          => WrEn,
 		    WriteDataWord => WriteDataWord,
         WriteAddress   => WriteAddress,
-        ReadAddress   => ReadAddress
+        ReadAddress   => ReadAddress,
+        lockedloop  => SpiPllLocked
     );
 
     process(Clk, Reset_n, SpiPllLocked) is
@@ -92,30 +93,24 @@ begin
             when IDLE_STATE =>
               StartSpi <= '1';
               SpiHandlerState <= ACTIVATE_SPI;
+              ReadAddress <= (others => '0');
 
             when ACTIVATE_SPI =>
               SpiReady <= '1';
-              ReadAddress <= WriteAddress;
-              SpiHandlerState <= RUN_STATE;
-
-            when RUN_STATE =>
-              if (WrEn = '0') then
-                SpiHandlerState <= READING_STATE;
-              end if;
-
-            when READING_STATE =>
-              if (memoryPart = '0') then
-                Leds <= ReadDataWord(0 to 7);
-              else
-                Leds <= ReadDataWord(8 to 15);
-              end if;
               SpiHandlerState <= END_STATE;
             
             when END_STATE =>
-              if (EndSpi = '1') then
-                memoryPart := not memoryPart;
+              if (WrEn = '0') then
+                if (memoryPart = '0') then
+                  Leds <= ReadDataWord(0 to 7);
+                else
+                  Leds <= ReadDataWord(8 to 15);
+                end if;
                 SpiHandlerState <= IDLE_STATE;
+              end if;
+              if (EndSpi = '1') then
                 SpiReady <= '0';
+                memoryPart := not memoryPart;
               end if;
           
             when others => NULL;
