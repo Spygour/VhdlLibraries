@@ -12,7 +12,7 @@ entity SpiSlaveHandler is
          SO     : out std_logic := '0';
          SI     : in  std_logic := '0';
          CS       : in std_logic := '1';
-			Leds  : out std_logic_vector (0 to 7) := "11111111";
+	 Leds  : out std_logic_vector (0 to 7) := "11111111";
          SpiReady : out std_logic := '0');
 
 end SpiSlaveHandler;
