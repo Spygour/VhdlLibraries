@@ -22,7 +22,8 @@ entity Vga is
          y_axis   : inout unsigned (9 downto 0) := (others => '0');
 	 HsyncComplete : inout std_logic := '0';
          VsyncComplete  : out std_logic := '0';
-	 LineBufferIndex : in integer  := 0);
+	 LineBufferIndex : in integer  := 0;
+	 PllLocked : in std_logic := '1');
 
 end Vga;
 
@@ -62,12 +63,12 @@ begin
     HsyncClk <= HsyncClk_reg;
     VsyncClk <= VsyncClk_reg;
     --Hsync pulse process
-    process(ColorClk, Reset_n) is
+    process(ColorClk, Reset_n, PllLocked) is
     begin
         if (Reset_n = '1') then
             HsyncClk_reg <= '1';
             HsyncState <= IDLE_STATE;
-        elsif rising_edge(ColorClk) then --Here we should increase the counter
+        elsif rising_edge(ColorClk) and PllLocked = '1' then --Here we should increase the counter
             case HsyncState is
                 when IDLE_STATE =>
                     HsyncState <= PULSE_STATE;
