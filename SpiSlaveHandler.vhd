@@ -43,9 +43,9 @@ begin
     port map
     (
         areset => Reset_n,
-		inclk0 => ActlClk,	
-		c0     => Clk,
-		locked =>  SpiPllLocked
+	inclk0 => ActlClk,	
+	c0     => Clk,
+	locked =>  SpiPllLocked
     );
 	 
 	 SpiRam:entity work.SpiRam(SYN)
@@ -73,7 +73,7 @@ begin
         EndSpi        => EndSpi,
         Words         => Words,
         WrEn          => WrEn,
-		    WriteDataWord => WriteDataWord,
+	WriteDataWord => WriteDataWord,
         WriteAddress   => WriteAddress,
         ReadAddress   => ReadAddress,
         lockedloop  => SpiPllLocked
