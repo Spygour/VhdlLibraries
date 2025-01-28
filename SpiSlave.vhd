@@ -76,24 +76,25 @@ begin
                     end if;
                 
                 when RISE_DETECT =>
-                    if (SpiClk_current = '1' and SpiClk_prev = '0') then
+		    if (Cs_prev = '0' and Cs_current = '1') then
+			SpiSlaveState <= END_STATE;
+                    elsif (SpiClk_current = '1' and SpiClk_prev = '0') then
                         SpiRxWord(to_integer(SpiBitCnt)) <= SI;
                         SO <= SpiTxWord(to_integer(SpiBitCnt));
                         SpiSlaveState <= CLOCK_HIGH;
                         WrEn <= '1';
-		    elsif (Cs_prev = '0' and Cs_current = '1') then
-			SpiSlaveState <= END_STATE;
                     end if;
 
                 when CLOCK_HIGH =>
                     if (SpiClk_current = '1' and SpiClk_prev = '1') then
-                        SpiBitCnt <= SpiBitCnt + 1;
                         SpiSlaveState <= FALL_DETECT;
                         if (SpiBitCnt = SpiBits) then
                             SpiWordCounter <= SpiWordCounter + 1;
                             WriteDataWord <= SpiRxWord;
                             SpiTxWord <= SpiRxWord;
                             SpiBitCnt <= (others => '0');
+			else
+			    SpiBitCnt <= SpiBitCnt + 1;
                         end if;
                     elsif (Cs_prev = '0' and Cs_current = '1') then
 			SpiSlaveState <= END_STATE;
@@ -106,7 +107,7 @@ begin
                         if (Cs_prev = '0' and Cs_current = '1') then
                             SpiSlaveState <= END_STATE;
                         elsif (SpiWordCounter >= SpiWords) then
-                            SpiSlaveState <= RISE_DETECT;
+                            SpiSlaveState <= END_STATE;
                         elsif SpiBitCnt = "00000" then
                             WriteAddress <= std_logic_vector(unsigned(WriteAddress) + 1);
                             SpiSlaveState <= RISE_DETECT;
