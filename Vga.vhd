@@ -131,13 +131,13 @@ begin
     end process;
 
     --Vsync pulse process
-    process(ColorClk, Reset_n) is
+    process(ColorClk, Reset_n, PllLocked) is
     begin
         if (Reset_n = '1') then
             VsyncClk_reg <= '1';
             VsyncState <= IDLE_STATE;
 	    VsyncComplete <= '0';
-        elsif rising_edge(ColorClk) then --Here we should increase the counter
+        elsif rising_edge(ColorClk) and PllLocked = '1' then --Here we should increase the counter
             case VsyncState is
                 when IDLE_STATE =>
                     VsyncState <= PULSE_STATE;
@@ -177,13 +177,13 @@ begin
     end process;
 	
     --color pulse process much more complicated
-    process(ColorClk, Reset_n) is
+    process(ColorClk, Reset_n, PllLocked) is
     begin
         if (Reset_n = '1') then
             R <= (others => '0');
 	    G <= (others => '0');
 	    B <= (others => '0');
-        elsif rising_edge(ColorClk) then --Here we should increase the counter
+        elsif rising_edge(ColorClk) and PllLocked = '1' then --Here we should increase the counter
             if (HsyncState = ACTIVE_STATE and VsyncState = ACTIVE_STATE) then
                 R <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (23 downto 16);
                 G <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (15 downto 8);
