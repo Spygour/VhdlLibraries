@@ -30,13 +30,13 @@ end Vga;
 architecture rtl of Vga is
     constant VsyncDuty : integer := 4;
     constant VsyncBackPort : integer := 27;
-    constant VsyncActive : integer := 627;
-    constant VsyncPeriod : integer := 628;
+    constant VsyncActive : integer := 600;
+    constant VsyncPeriod : integer := 627;
 
     constant HsyncDuty : integer := 128;
-    constant HsyncBackPorch: integer := 168;
-    constant HsyncPixel : integer := 974;
-    constant HsyncPeriod : integer := 1062;
+    constant HsyncBackPorch: integer := 215;
+    constant HsyncPixel : integer := 1015;
+    constant HsyncPeriod : integer := 1055;
 
     signal HsyncCounter : integer := 0;
     signal VsyncCounter : integer := 0;
@@ -108,7 +108,7 @@ begin
 
                 when FRONT_PORCH =>
 		    -- Prepare to start the new pulse (We need to check the HsyncComplete inside the VsyncProcess thats why we need an extra state)
-                    if (HsyncCounter = (HsyncPeriod - 1) ) then
+                    if (HsyncCounter = HsyncPeriod  ) then
                         VsyncCounter <= VsyncCounter + 1;
                         HsyncComplete <= '1';
                         HsyncCounter <= 0;
@@ -165,7 +165,7 @@ begin
                     end if;
                 
                 when FRONT_PORCH =>
-                    if ((VsyncCounter = VsyncPeriod) and (HsyncState = PREPARE_PULSE))  then
+                    if ( ( (VsyncCounter = VsyncPeriod) or (VsyncCounter = 0)) and (HsyncState = PREPARE_PULSE))  then
                         y_axis <=  (others => '0');
                         VsyncState <= PULSE_STATE;
                         VsyncClk_reg <= not VsyncClk_reg;
