@@ -30,7 +30,7 @@ end Vga;
 architecture rtl of Vga is
     constant VsyncDuty : integer := 4;
     constant VsyncBackPort : integer := 27;
-    constant VsyncActive : integer := 600;
+    constant VsyncActive : integer := 626;
     constant VsyncPeriod : integer := 627;
 
     constant HsyncDuty : integer := 128;
@@ -42,6 +42,7 @@ architecture rtl of Vga is
     signal VsyncCounter : integer := 0;
     signal HsyncClk_reg : std_logic := '1';
     signal VsyncClk_reg : std_logic := '1';
+
 
 
     type Sync_State is 
@@ -83,8 +84,6 @@ begin
                         HsyncState <= BACK_PORCH_STATE;
                         HsyncClk_reg <= not HsyncClk_reg;
                         x_axis <= (others => '0');
-                    else
-                        HsyncComplete <= '0';
                     end if;
                     HsyncCounter <= HsyncCounter+1;
 
@@ -98,6 +97,7 @@ begin
                 when ACTIVE_STATE =>
                     if (HsyncCounter = HsyncPixel ) then
                         HsyncState <= FRONT_PORCH;
+                        HsyncComplete <= '1';
                     else
                         -- 0x320 = 800
                         if ((x_axis < X"320") and (VsyncState <= ACTIVE_STATE)) then
@@ -110,7 +110,7 @@ begin
 		    -- Prepare to start the new pulse (We need to check the HsyncComplete inside the VsyncProcess thats why we need an extra state)
                     if (HsyncCounter = HsyncPeriod  ) then
                         VsyncCounter <= VsyncCounter + 1;
-                        HsyncComplete <= '1';
+                        HsyncComplete <= '0';
                         HsyncCounter <= 0;
                         HsyncState <= PREPARE_PULSE;
                     else
@@ -148,7 +148,6 @@ begin
                     if (VsyncCounter = VsyncDuty) then
                         VsyncState <= BACK_PORCH_STATE;
                         VsyncClk_reg <= not VsyncClk_reg;
-			VsyncComplete <= '0';
                     end if;
 
                 when BACK_PORCH_STATE =>
@@ -169,6 +168,7 @@ begin
                         y_axis <=  (others => '0');
                         VsyncState <= PULSE_STATE;
                         VsyncClk_reg <= not VsyncClk_reg;
+								VsyncComplete <= '0';
                     end if;
 
                 when others => null;
@@ -185,8 +185,8 @@ begin
 	    B <= (others => '0');
         elsif rising_edge(ColorClk) and PllLocked = '1' then --Here we should increase the counter
             if (HsyncState = ACTIVE_STATE and VsyncState = ACTIVE_STATE) then
-                R <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (23 downto 16);
-                G <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (15 downto 8);
+                G <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (23 downto 16);
+                R <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (15 downto 8);
                 B <= LineBuffer(LineBufferIndex) (to_integer(x_axis)) (7 downto 0);
             else
                 R <= (others => '0');
